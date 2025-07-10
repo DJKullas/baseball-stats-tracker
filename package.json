@@ -9,7 +9,7 @@
     "start": "next start"
   },
   "overrides": {
-    "zod-to-json-schema": "3.6.1"
+    "zod-to-json-schema": "^4.0.0"
   },
   "dependencies": {
     "@ai-sdk/openai": "latest",

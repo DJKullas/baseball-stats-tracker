@@ -8,6 +8,9 @@
     "lint": "next lint",
     "start": "next start"
   },
+  "overrides": {
+    "zod": "3.23.8"
+  },
   "dependencies": {
     "@ai-sdk/openai": "latest",
     "@hookform/resolvers": "latest",

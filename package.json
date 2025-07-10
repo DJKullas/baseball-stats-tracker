@@ -8,9 +8,6 @@
     "lint": "next lint",
     "start": "next start"
   },
-  "overrides": {
-    "zod-to-json-schema": "^4.0.0"
-  },
   "dependencies": {
     "@ai-sdk/openai": "latest",
     "@hookform/resolvers": "latest",
@@ -79,5 +76,10 @@
     "postcss": "^8.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "overrides": {
+      "zod-to-json-schema": "^4.0.0"
+    }
   }
 }

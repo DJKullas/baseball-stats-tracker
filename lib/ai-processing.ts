@@ -49,7 +49,7 @@ export async function processScorebookImage(mediaUrl: string): Promise<PlayerSta
         },
         {
           type: "image",
-          image: new URL("https://blob.v0.dev/OYcoA.jpeg"),
+          image: new URL("/example-scorebooks/game1.jpeg", process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
         },
         {
           type: "text",
@@ -61,7 +61,7 @@ export async function processScorebookImage(mediaUrl: string): Promise<PlayerSta
         },
         {
           type: "image",
-          image: new URL("https://blob.v0.dev/2WIgt.jpeg"),
+          image: new URL("/example-scorebooks/game2.jpeg", process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
         },
         {
           type: "text",
@@ -73,7 +73,7 @@ export async function processScorebookImage(mediaUrl: string): Promise<PlayerSta
         },
         {
           type: "image",
-          image: new URL("https://blob.v0.dev/Ny8wq.jpeg"),
+          image: new URL("/example-scorebooks/game3.jpeg", process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
         },
         {
           type: "text",

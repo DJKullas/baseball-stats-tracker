@@ -49,7 +49,7 @@ export async function processScorebookImage(mediaUrl: string): Promise<PlayerSta
         },
         {
           type: "image",
-          image: new URL("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Game1.JPEG-cM4sPl8qxl50gq3Njpfqi2278Hff2n.jpeg"),
+          image: new URL("https://blob.v0.dev/OYcoA.jpeg"),
         },
         {
           type: "text",
@@ -61,7 +61,7 @@ export async function processScorebookImage(mediaUrl: string): Promise<PlayerSta
         },
         {
           type: "image",
-          image: new URL("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Game2.JPEG-3tUpPmYH3A2psJnsPuNjOTrRXtSBLt.jpeg"),
+          image: new URL("https://blob.v0.dev/2WIgt.jpeg"),
         },
         {
           type: "text",
@@ -73,7 +73,7 @@ export async function processScorebookImage(mediaUrl: string): Promise<PlayerSta
         },
         {
           type: "image",
-          image: new URL("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Game3.JPEG-bhzV3PZhOO16NJ5Lj4sRzNdMcFCkam.jpeg"),
+          image: new URL("https://blob.v0.dev/Ny8wq.jpeg"),
         },
         {
           type: "text",
@@ -99,8 +99,8 @@ export async function processScorebookImage(mediaUrl: string): Promise<PlayerSta
 
 1.  **ACCURACY OVER COMPLETENESS:** If a player's name or a specific stat is completely illegible or ambiguous, OMIT THAT PLAYER entirely from the final JSON output. It is profoundly better to have missing data than incorrect data. Do not guess.
 2.  **FORMULAS ARE LAW:** Before outputting the final JSON, you MUST perform a validation check for EVERY player. If the formulas are not satisfied, you MUST re-analyze the image to find your error. This is not optional.
-    -   **Plate Appearance Formula:** \`PA = AB + BB + HBP + SF + SAC\`
-    -   **Hits Formula:** \`H = 1B + 2B + 3B + HR\`
+    -   **Plate Appearance Formula:** PA = AB + BB + HBP + SF + SAC
+    -   **Hits Formula:** H = 1B + 2B + 3B + HR
 3.  **BE LITERAL:** Extract only what is written. Do not infer stats that aren't explicitly marked. If a box is empty, it does not count as a plate appearance.
 4.  **COUNT PHYSICAL BOXES:** A player's Plate Appearances (PA) MUST equal the number of non-empty, physically marked boxes in their row. If you count 4 boxes with markings for a player, the final PA for that player MUST be 4. If you count 5 boxes with markings for a player, the final PA for that player MUST be 5. This rule applies to all numbers. This is a non-negotiable cross-check.
 5. Hints: The most important thing to know is that a line in the box to a base means that a player got a hit. The line should always start from the bottom center of the square and extend towards the top right of the page. It then may take another angle, but we only need to see the initial line to determine if it is a hit. It is asbolutely vital to record hits properly. We want to make sure we give credit when hits happen. Basically, a line in a box means there was a hit. A number in the bottom right corner of a square that is 1, 2, or 3 corresponds to that player getting out, but if there is a line to the base in that square, then it is a hit instead. If there are lines drawn to bases then that is a hit. If you don't know what type of hit, assume it is a single. If there is shading in the square to fill the diamond then it is a run. It does not need to be completely filled, only mostly. If there is nothing in a square then it is nothing. If you look within a square at the top, you can see printed numbers. If one of those is circled or it looks like someone tried to circle it, that corresponds to the type of hit the player got which could be a single, double, triple, or home run. If you look in the bottom left, you can see symbols for BB which is a walk if circled, HP which is HPB if circled, and Sac which is a sac if circled. Also when extracting names, do your best to use names that make sense if you are unsure what the name is. If it looks short and is hard to tell what it is, then it is probably initials. 
@@ -115,19 +115,19 @@ export async function processScorebookImage(mediaUrl: string): Promise<PlayerSta
 
 | Symbol(s)                               | Stat Category | Notes                                                              |
 | :-------------------------------------- | :------------ | :----------------------------------------------------------------- |
-| \`1B\`, \`S\`, or a single line to first | \`1B\`        | Counts as H, AB, PA.                                               |
-| \`2B\`, \`D\`                            | \`2B\`        | Counts as H, AB, PA.                                               |
-| \`3B\`, \`T\`                            | \`3B\`        | Counts as H, AB, PA.                                               |
-| \`HR\`                                  | \`HR\`        | Counts as H, AB, PA.                                               |
-| \`BB\`                                  | \`BB\`        | Counts as PA. **Does NOT count as AB.**                            |
-| \`HBP\`                                 | \`HBP\`       | Counts as PA. **Does NOT count as AB.**                            |
-| \`K\`, \`ꓘ\` (backwards K)               | \`SO\`        | Counts as AB, PA.                                                  |
-| \`SF\`                                  | \`SF\`        | Counts as PA. **Does NOT count as AB.**                            |
-| \`SAC\`, \`SH\`                         | \`SAC\`       | Counts as PA. **Does NOT count as AB.**                            |
-| \`E\` + number (e.g., E6)               | \`AB\`, \`PA\`  | An out on an error. Counts as AB, PA. **Does NOT count as H.**     |
-| \`FC\`                                  | \`AB\`, \`PA\`  | Fielder's Choice. Counts as AB, PA. **Does NOT count as H.**       |
-| Colored-in diamond                      | \`R\`         | A run was scored by that player.                                   |
-| Number inside diamond (e.g., ②)         | \`RBI\`       | The number of Runs Batted In on that play.                         |
+| 1B, S, or a single line to first | 1B        | Counts as H, AB, PA.                                               |
+| 2B, D                            | 2B        | Counts as H, AB, PA.                                               |
+| 3B, T                            | 3B        | Counts as H, AB, PA.                                               |
+| HR                                  | HR        | Counts as H, AB, PA.                                               |
+| BB                                  | BB        | Counts as PA. **Does NOT count as AB.**                            |
+| HBP                                 | HBP       | Counts as PA. **Does NOT count as AB.**                            |
+| K, ꓘ (backwards K)               | SO        | Counts as AB, PA.                                                  |
+| SF                                  | SF        | Counts as PA. **Does NOT count as AB.**                            |
+| SAC, SH                         | SAC       | Counts as PA. **Does NOT count as AB.**                            |
+| E + number (e.g., E6)               | AB, PA  | An out on an error. Counts as AB, PA. **Does NOT count as H.**     |
+| FC                                  | AB, PA  | Fielder's Choice. Counts as AB, PA. **Does NOT count as H.**       |
+| Colored-in diamond                      | R         | A run was scored by that player.                                   |
+| Number inside diamond (e.g., ②)         | RBI       | The number of Runs Batted In on that play.                         |
 
 ### Your Step-by-Step Internal Process (MANDATORY)
 

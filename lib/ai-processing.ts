@@ -41,7 +41,47 @@ export async function processScorebookImage(mediaUrl: string): Promise<PlayerSta
       content: [
         {
           type: "text",
-          text: "Please extract the stats from this scorebook image. Follow the instructions in the system prompt precisely. Your accuracy is critical.",
+          text: "Here are three example scorebooks that show the visual patterns you should recognize. Study these carefully to understand how markings translate to statistics:",
+        },
+        {
+          type: "text",
+          text: "EXAMPLE GAME 1 - This scorebook shows the following statistics by row:",
+        },
+        {
+          type: "image",
+          image: new URL("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Game1.JPEG-cM4sPl8qxl50gq3Njpfqi2278Hff2n.jpeg"),
+        },
+        {
+          type: "text",
+          text: "Row 1: 4 PA, 4 AB, 1 H, 1 R, 0 BB | Row 2: 4 PA, 4 AB, 2 H, 2 R, 0 BB | Row 3: 4 PA, 4 AB, 3 H, 1 3B, 2 R, 0 BB | Row 4: 4 PA, 4 AB, 3 H, 1 R, 0 BB | Row 5: 4 PA, 4 AB, 1 H, 0 R, 0 BB | Row 6: 4 PA, 4 AB, 3 H, 2 R, 0 BB | Row 7: 4 PA, 4 AB, 4 H, 0 R, 0 BB | Row 8: 4 PA, 4 AB, 2 H, 0 R, 0 BB | Row 9: 4 PA, 4 AB, 2 H, 1 2B, 0 R, 0 BB | Row 10: 3 PA, 3 AB, 3 H, 1 2B, 1 R, 0 BB",
+        },
+        {
+          type: "text",
+          text: "EXAMPLE GAME 2 - This scorebook shows the following statistics by row:",
+        },
+        {
+          type: "image",
+          image: new URL("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Game2.JPEG-3tUpPmYH3A2psJnsPuNjOTrRXtSBLt.jpeg"),
+        },
+        {
+          type: "text",
+          text: "Row 1: 5 PA, 4 AB, 4 H, 1 2B, 3 R, 1 BB | Row 2: 5 PA, 5 AB, 4 H, 3 2B, 2 R, 0 BB | Row 3: 5 PA, 4 AB, 2 H, 0 R, 1 BB | Row 4: 4 PA, 3 AB, 1 H, 1 SAC, 1 R, 0 BB | Row 5: 4 PA, 4 AB, 2 H, 1 2B, 1 R, 0 BB | Row 6: 4 PA, 4 AB, 2 H, 1 R, 0 BB | Row 7: 4 PA, 4 AB, 2 H, 0 R, 0 BB | Row 8: 4 PA, 4 AB, 3 H, 3 R, 0 BB | Row 9: 4 PA, 4 AB, 2 H, 1 2B, 2 R, 0 BB | Row 10: 4 PA, 4 AB, 4 H, 1 2B, 3 R, 0 BB",
+        },
+        {
+          type: "text",
+          text: "EXAMPLE GAME 3 - This scorebook shows the following statistics by row:",
+        },
+        {
+          type: "image",
+          image: new URL("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Game3.JPEG-bhzV3PZhOO16NJ5Lj4sRzNdMcFCkam.jpeg"),
+        },
+        {
+          type: "text",
+          text: "Row 1: 4 PA, 3 AB, 3 H, 2 R, 1 BB | Row 2: 4 PA, 4 AB, 3 H, 3 R, 1 BB | Row 3: 4 PA, 4 AB, 3 H, 3 R, 1 HR, 0 BB | Row 4: 4 PA, 4 AB, 4 H, 4 R, 0 BB | Row 5: 4 PA, 4 AB, 4 H, 2 R, 0 BB | Row 6: 4 PA, 4 AB, 4 H, 1 R, 0 BB | Row 7: 4 PA, 4 AB, 2 H, 0 R, 0 BB | Row 8: 3 PA, 3 AB, 1 H, 1 R, 0 BB | Row 9: 3 PA, 3 AB, 1 H, 1 2B, 1 R, 0 BB | Row 10: 3 PA, 3 AB, 3 H, 1 2B, 1 R, 0 BB | Row 11: 3 PA, 3 AB, 1 H, 0 R, 0 BB | Row 12: 3 PA, 3 AB, 2 H, 2 R, 0 BB",
+        },
+        {
+          type: "text",
+          text: "Now please extract the stats from this NEW scorebook image. Follow the instructions in the system prompt precisely. Your accuracy is critical.",
         },
         {
           type: "image",
@@ -102,54 +142,7 @@ You will perform the following steps internally. Do not output this process in t
     *   *Example Validation:* "Validation for Jane Doe: PA(4) = AB(3) + BB(1) + HBP(0) + SF(0) + SAC(0) -> 4 = 4. Correct. H(1) = 1B(0) + 2B(1) + 3B(0) + HR(0) -> 1 = 1. Correct. Proceeding."
     *   If validation fails, you MUST state the failure and go back to Step 2 to re-tally for that player.
 5.  **Final JSON Generation:** Only after successfully validating ALL players, construct the final, clean JSON object according to the provided Zod schema. Ensure all stat fields are present (defaulting to 0 if no value was tallied).`,
-      messages: [
-        {
-          role: "system",
-          content: [
-            {
-              type: "text",
-              text: "Here are three example scorebooks that show the visual patterns you should recognize. Study these carefully to understand how markings translate to statistics:",
-            },
-            {
-              type: "text",
-              text: "EXAMPLE GAME 1 - This scorebook shows the following statistics by row:",
-            },
-            {
-              type: "image",
-              image: new URL("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Game1.JPEG-cM4sPl8qxl50gq3Njpfqi2278Hff2n.jpeg"),
-            },
-            {
-              type: "text",
-              text: "Row 1: 4 PA, 4 AB, 1 H, 1 R, 0 BB | Row 2: 4 PA, 4 AB, 2 H, 2 R, 0 BB | Row 3: 4 PA, 4 AB, 3 H, 1 3B, 2 R, 0 BB | Row 4: 4 PA, 4 AB, 3 H, 1 R, 0 BB | Row 5: 4 PA, 4 AB, 1 H, 0 R, 0 BB | Row 6: 4 PA, 4 AB, 3 H, 2 R, 0 BB | Row 7: 4 PA, 4 AB, 4 H, 0 R, 0 BB | Row 8: 4 PA, 4 AB, 2 H, 0 R, 0 BB | Row 9: 4 PA, 4 AB, 2 H, 1 2B, 0 R, 0 BB | Row 10: 3 PA, 3 AB, 3 H, 1 2B, 1 R, 0 BB",
-            },
-            {
-              type: "text",
-              text: "EXAMPLE GAME 2 - This scorebook shows the following statistics by row:",
-            },
-            {
-              type: "image",
-              image: new URL("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Game2.JPEG-3tUpPmYH3A2psJnsPuNjOTrRXtSBLt.jpeg"),
-            },
-            {
-              type: "text",
-              text: "Row 1: 5 PA, 4 AB, 4 H, 1 2B, 3 R, 1 BB | Row 2: 5 PA, 5 AB, 4 H, 3 2B, 2 R, 0 BB | Row 3: 5 PA, 4 AB, 2 H, 0 R, 1 BB | Row 4: 4 PA, 3 AB, 1 H, 1 SAC, 1 R, 0 BB | Row 5: 4 PA, 4 AB, 2 H, 1 2B, 1 R, 0 BB | Row 6: 4 PA, 4 AB, 2 H, 1 R, 0 BB | Row 7: 4 PA, 4 AB, 2 H, 0 R, 0 BB | Row 8: 4 PA, 4 AB, 3 H, 3 R, 0 BB | Row 9: 4 PA, 4 AB, 2 H, 1 2B, 2 R, 0 BB | Row 10: 4 PA, 4 AB, 4 H, 1 2B, 3 R, 0 BB",
-            },
-            {
-              type: "text",
-              text: "EXAMPLE GAME 3 - This scorebook shows the following statistics by row:",
-            },
-            {
-              type: "image",
-              image: new URL("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Game3.JPEG-bhzV3PZhOO16NJ5Lj4sRzNdMcFCkam.jpeg"),
-            },
-            {
-              type: "text",
-              text: "Row 1: 4 PA, 3 AB, 3 H, 2 R, 1 BB | Row 2: 4 PA, 4 AB, 3 H, 3 R, 1 BB | Row 3: 4 PA, 4 AB, 3 H, 3 R, 1 HR, 0 BB | Row 4: 4 PA, 4 AB, 4 H, 4 R, 0 BB | Row 5: 4 PA, 4 AB, 4 H, 2 R, 0 BB | Row 6: 4 PA, 4 AB, 4 H, 1 R, 0 BB | Row 7: 4 PA, 4 AB, 2 H, 0 R, 0 BB | Row 8: 3 PA, 3 AB, 1 H, 1 R, 0 BB | Row 9: 3 PA, 3 AB, 1 H, 1 2B, 1 R, 0 BB | Row 10: 3 PA, 3 AB, 3 H, 1 2B, 1 R, 0 BB | Row 11: 3 PA, 3 AB, 1 H, 0 R, 0 BB | Row 12: 3 PA, 3 AB, 2 H, 2 R, 0 BB",
-            },
-          ],
-        },
-        userMessage,
-      ],
+      messages: [userMessage],
     })
 
     console.log("AI processing complete. Extracted stats for:", object.players.length, "players.")

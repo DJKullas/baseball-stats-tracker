@@ -1,5 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai"
-import { generateObject, type CoreUserMessage } from "ai"
+import { generateObject, type CoreUserMessage, jsonSchema } from "ai"
 import { z } from "zod"
 
 const playerStatSchema = z.object({
@@ -24,6 +24,47 @@ const playerStatSchema = z.object({
 
 const scorebookSchema = z.object({
   players: z.array(playerStatSchema),
+})
+
+// Convert Zod schema to JSON Schema
+const scorebookJsonSchema = jsonSchema<z.infer<typeof scorebookSchema>>({
+  type: "object",
+  properties: {
+    players: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          playerName: {
+            type: "string",
+            description: "The full name of the player.",
+          },
+          stats: {
+            type: "object",
+            properties: {
+              PA: { type: "number", description: "Plate Appearances" },
+              AB: { type: "number", description: "At Bats" },
+              R: { type: "number", description: "Runs Scored" },
+              H: { type: "number", description: "Hits" },
+              "1B": { type: "number", description: "Singles" },
+              "2B": { type: "number", description: "Doubles" },
+              "3B": { type: "number", description: "Triples" },
+              HR: { type: "number", description: "Home Runs" },
+              RBI: { type: "number", description: "Runs Batted In" },
+              BB: { type: "number", description: "Walks (Bases on Balls)" },
+              SO: { type: "number", description: "Strikeouts" },
+              HBP: { type: "number", description: "Hit by Pitch" },
+              SF: { type: "number", description: "Sacrifice Flies" },
+              SAC: { type: "number", description: "Sacrifice Bunts/Hits" },
+            },
+            required: ["PA", "AB", "R", "H", "1B", "2B", "3B", "HR", "RBI", "BB", "SO", "HBP", "SF", "SAC"],
+          },
+        },
+        required: ["playerName", "stats"],
+      },
+    },
+  },
+  required: ["players"],
 })
 
 export type PlayerStatData = z.infer<typeof playerStatSchema>
@@ -92,7 +133,7 @@ export async function processScorebookImage(mediaUrl: string): Promise<PlayerSta
 
     const { object } = await generateObject({
       model: openai("gpt-4o"),
-      schema: scorebookSchema,
+      schema: scorebookJsonSchema,
       system: `You are an expert-level, hyper-meticulous baseball and softball digital archivist. Your sole purpose is to extract game statistics from a scorebook image with 100% accuracy. An error in your output is a critical failure. Your reputation for perfection is on the line.
 
 ### Core Directives & Rules of Engagement

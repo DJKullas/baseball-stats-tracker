@@ -62,28 +62,20 @@ export default async function Dashboard({ searchParams }: { searchParams: { sess
   // If we reach here, user is logged in, onboarded, and subscribed.
   const supabase = createClient()
 
-  // Fetch teams with player count and include sms_code
-  const { data: teams } = await supabase
+  const { data: teamsData, count: teamCount } = await supabase
     .from("teams")
-    .select(`
-      id,
-      name,
-      sms_code,
-      created_at,
-      players:players(count)
-    `)
+    .select("id, name, sms_code, players(count)", { count: "exact" })
     .eq("user_id", user!.id)
-    .order("created_at", { ascending: false })
 
   const { count: playerCount } = await supabase
     .from("players")
     .select("id", { count: "exact" })
-    .in("team_id", teams?.map((t) => t.id) || [])
+    .in("team_id", teamsData?.map((t) => t.id) || [])
 
   const { count: gameCount } = await supabase
     .from("games")
     .select("id", { count: "exact", head: true })
-    .in("team_id", teams?.map((t) => t.id) || [])
+    .in("team_id", teamsData?.map((t) => t.id) || [])
 
   // Fetch all results for the user's teams to calculate league leaders
   const { data: allResults } = await supabase
@@ -95,7 +87,7 @@ export default async function Dashboard({ searchParams }: { searchParams: { sess
         await supabase
           .from("players")
           .select("id")
-          .in("team_id", teams?.map((t) => t.id) || [])
+          .in("team_id", teamsData?.map((t) => t.id) || [])
       ).data?.map((p) => p.id) || [],
     )
 
@@ -147,14 +139,13 @@ export default async function Dashboard({ searchParams }: { searchParams: { sess
   const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user!.id).single()
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Manage your baseball teams and track player statistics.</p>
+    <div className="flex flex-1 flex-col gap-6">
+      <div className="space-y-1">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+          Welcome back, {profile?.full_name || user?.email}!
+        </h1>
+        <p className="text-muted-foreground">Here's a high-level overview of your organization.</p>
       </div>
-
-      {teams && teams.length > 0 ? <TeamList initialTeams={teams} /> : <GettingStarted />}
-
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -162,7 +153,7 @@ export default async function Dashboard({ searchParams }: { searchParams: { sess
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{teams?.length || 0}</div>
+            <div className="text-2xl font-bold">{teamCount || 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -183,6 +174,11 @@ export default async function Dashboard({ searchParams }: { searchParams: { sess
             <div className="text-2xl font-bold">{gameCount || 0}</div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <TeamList initialTeams={teamsData || []} />
+        <GettingStarted twilioPhoneNumber={process.env.TWILIO_PHONE_NUMBER} />
       </div>
 
       <Card>

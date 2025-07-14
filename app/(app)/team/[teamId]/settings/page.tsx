@@ -15,7 +15,7 @@ export default async function TeamSettingsPage({ params }: { params: { teamId: s
   // Verify the user owns this team
   const { data: team } = await supabase
     .from("teams")
-    .select("id, name, sms_code, whitelisted_phone_numbers")
+    .select("id, name, sms_code, whitelisted_numbers")
     .eq("id", params.teamId)
     .eq("user_id", user!.id)
     .single()
@@ -33,7 +33,7 @@ export default async function TeamSettingsPage({ params }: { params: { teamId: s
       <TeamSettings
         teamId={team.id}
         smsCode={team.sms_code}
-        initialWhitelistedNumbers={team.whitelisted_phone_numbers}
+        initialWhitelistedNumbers={team.whitelisted_numbers}
         twilioPhoneNumber={process.env.TWILIO_PHONE_NUMBER}
       />
     </div>

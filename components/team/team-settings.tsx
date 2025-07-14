@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Copy, Check, XIcon, Loader2, Phone, MessageSquare } from "lucide-react"
+import { Copy, Check, XIcon, Loader2 } from "lucide-react"
 import { updateWhitelist } from "@/app/(app)/team/[teamId]/settings/actions"
 import { toast } from "sonner"
 import { normalizePhoneNumber } from "@/lib/utils"
@@ -63,102 +63,80 @@ export default function TeamSettings({
   }
 
   return (
-    <div className="space-y-6">
-      {/* SMS Information Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            SMS Scorebook Upload
-          </CardTitle>
-          <CardDescription>Send scorebook photos via SMS to automatically extract statistics</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {twilioPhoneNumber && (
-            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-              <Phone className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Send photos to:</span>
-              <Badge variant="outline" className="font-mono">
-                {twilioPhoneNumber}
-              </Badge>
+    <Card>
+      <CardHeader>
+        <CardTitle>SMS & Whitelist Settings</CardTitle>
+        <CardDescription>
+          Configure which phone numbers can submit stats via SMS and find your team's unique submission code.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {twilioPhoneNumber && (
+          <div className="space-y-2">
+            <Label htmlFor="twilio-number">SMS Number</Label>
+            <div className="flex items-center space-x-2">
+              <Input id="twilio-number" value={twilioPhoneNumber} readOnly className="font-mono" />
             </div>
-          )}
-
-          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Your team code:</span>
-            <Badge variant="secondary" className="font-mono">
-              {smsCode}
-            </Badge>
-            <Button variant="ghost" size="sm" onClick={copyToClipboard} className="h-6 w-6 p-0">
-              {hasCopied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+            <p className="text-sm text-muted-foreground">Send your scorebook images to this number.</p>
+          </div>
+        )}
+        <div className="space-y-2">
+          <Label htmlFor="sms-code">Your Team's SMS Code</Label>
+          <div className="flex items-center space-x-2">
+            <Input id="sms-code" value={smsCode} readOnly className="font-mono" />
+            <Button type="button" size="sm" className="px-3" onClick={copyToClipboard}>
+              <span className="sr-only">Copy</span>
+              {hasCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             </Button>
           </div>
-
-          <div className="text-sm text-muted-foreground">
-            <p>To upload a scorebook:</p>
-            <ol className="list-decimal list-inside mt-1 space-y-1">
-              <li>Take a photo of your scorebook</li>
-              <li>Text the photo to {twilioPhoneNumber || "the SMS number"}</li>
-              <li>Include your team code "{smsCode}" in the message</li>
-              <li>Statistics will be automatically extracted and added to your team</li>
-            </ol>
+          <p className="text-sm text-muted-foreground">
+            Include this code as the first word in your text message when submitting a scorebook image.
+          </p>
+        </div>
+        <div className="space-y-2">
+          <Label>Whitelisted Phone Numbers</Label>
+          <div className="flex gap-2">
+            <Input
+              placeholder="e.g., +15551234567"
+              value={currentPhoneNumber}
+              onChange={(e) => setCurrentPhoneNumber(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  addPhoneNumber()
+                }
+              }}
+            />
+            <Button type="button" onClick={addPhoneNumber}>
+              Add
+            </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Whitelist Settings Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Phone Number Whitelist</CardTitle>
-          <CardDescription>Configure which phone numbers can submit stats via SMS for your team.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Whitelisted Phone Numbers</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="e.g., +15551234567"
-                value={currentPhoneNumber}
-                onChange={(e) => setCurrentPhoneNumber(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault()
-                    addPhoneNumber()
-                  }
-                }}
-              />
-              <Button type="button" onClick={addPhoneNumber}>
-                Add
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2 pt-2">
-              {phoneNumbers.length > 0 ? (
-                phoneNumbers.map((num) => (
-                  <Badge key={num} variant="secondary" className="flex items-center gap-1">
-                    {num}
-                    <button
-                      type="button"
-                      onClick={() => removePhoneNumber(num)}
-                      className="ml-1 rounded-full hover:bg-muted"
-                    >
-                      <XIcon className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">No phone numbers whitelisted yet.</p>
-              )}
-            </div>
+          <div className="flex flex-wrap gap-2 pt-2">
+            {phoneNumbers.length > 0 ? (
+              phoneNumbers.map((num) => (
+                <Badge key={num} variant="secondary" className="flex items-center gap-1">
+                  {num}
+                  <button
+                    type="button"
+                    onClick={() => removePhoneNumber(num)}
+                    className="ml-1 rounded-full hover:bg-muted"
+                  >
+                    <XIcon className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No phone numbers whitelisted yet.</p>
+            )}
           </div>
-        </CardContent>
-        <CardFooter>
-          <Button onClick={handleSave} disabled={isPending}>
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Changes
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button onClick={handleSave} disabled={isPending}>
+          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Save Changes
+        </Button>
+      </CardFooter>
+    </Card>
   )
 }

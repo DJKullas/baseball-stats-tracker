@@ -39,17 +39,23 @@ export function SidebarTrigger({ className }: { className?: string }) {
 }
 
 export function Sidebar({ children, className }: { children: React.ReactNode; className?: string }) {
-  const { open } = useSidebar()
+  const { open, toggle } = useSidebar()
+
   return (
-    <aside
-      className={cn(
-        "fixed inset-y-0 left-0 z-40 w-64 border-r bg-background transition-transform lg:static lg:translate-x-0 flex flex-col",
-        open ? "translate-x-0" : "-translate-x-full",
-        className,
-      )}
-    >
-      {children}
-    </aside>
+    <>
+      {/* Mobile overlay to close sidebar */}
+      {open && <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={toggle} aria-hidden="true" />}
+
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 w-64 border-r bg-background transition-transform lg:static lg:translate-x-0 flex flex-col",
+          open ? "translate-x-0" : "-translate-x-full",
+          className,
+        )}
+      >
+        {children}
+      </aside>
+    </>
   )
 }
 
@@ -78,9 +84,17 @@ export function SidebarNavLink({
   children: React.ReactNode
   active?: boolean
 }) {
+  const { toggle } = useSidebar()
+
   return (
     <Link
       href={href}
+      onClick={() => {
+        // Close sidebar on mobile when clicking nav links
+        if (typeof window !== "undefined" && window.innerWidth < 1024) {
+          toggle()
+        }
+      }}
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
         active && "bg-muted text-primary",

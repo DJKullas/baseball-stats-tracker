@@ -18,10 +18,17 @@ const statSchema = z.object({
   playerId: z.string().min(1, { message: "Player is required." }),
   PA: z.coerce.number().int().min(0).default(0),
   AB: z.coerce.number().int().min(0).default(0),
+  R: z.coerce.number().int().min(0).default(0),
   H: z.coerce.number().int().min(0).default(0),
   RBI: z.coerce.number().int().min(0).default(0),
   BB: z.coerce.number().int().min(0).default(0),
   SO: z.coerce.number().int().min(0).default(0),
+  HBP: z.coerce.number().int().min(0).default(0),
+  SF: z.coerce.number().int().min(0).default(0),
+  "1B": z.coerce.number().int().min(0).default(0),
+  "2B": z.coerce.number().int().min(0).default(0),
+  "3B": z.coerce.number().int().min(0).default(0),
+  HR: z.coerce.number().int().min(0).default(0),
 })
 
 const formSchema = z.object({
@@ -49,10 +56,17 @@ export default function EditGameDialog({ game, teamId, players, isOpen, onClose,
         playerId: r.player_id,
         PA: (r.stats as any)?.PA || 0,
         AB: (r.stats as any)?.AB || 0,
+        R: (r.stats as any)?.R || 0,
         H: (r.stats as any)?.H || 0,
         RBI: (r.stats as any)?.RBI || 0,
         BB: (r.stats as any)?.BB || 0,
         SO: (r.stats as any)?.SO || 0,
+        HBP: (r.stats as any)?.HBP || 0,
+        SF: (r.stats as any)?.SF || 0,
+        "1B": (r.stats as any)?.["1B"] || 0,
+        "2B": (r.stats as any)?.["2B"] || 0,
+        "3B": (r.stats as any)?.["3B"] || 0,
+        HR: (r.stats as any)?.HR || 0,
       })),
     },
   })
@@ -77,7 +91,7 @@ export default function EditGameDialog({ game, teamId, players, isOpen, onClose,
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>Edit Game</DialogTitle>
           <DialogDescription>
@@ -85,108 +99,222 @@ export default function EditGameDialog({ game, teamId, players, isOpen, onClose,
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-h-[70vh] overflow-y-auto pr-6">
-            <div className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="max-h-[60vh] overflow-y-auto pr-4 space-y-4">
               {fields.map((field, index) => (
-                <div key={field.id} className="flex items-end gap-2 flex-wrap border p-4 rounded-lg">
-                  <FormField
-                    control={form.control}
-                    name={`playerStats.${index}.playerId`}
-                    render={({ field }) => (
-                      <FormItem className="flex-grow min-w-[150px]">
-                        <FormLabel>Player</FormLabel>
-                        <FormControl>
-                          <PlayerCombobox players={players} value={field.value} onChange={field.onChange} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {/* Stat inputs */}
-                  <FormField
-                    name={`playerStats.${index}.PA`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>PA</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} className="w-16" />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    name={`playerStats.${index}.AB`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>AB</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} className="w-16" />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    name={`playerStats.${index}.H`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>H</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} className="w-16" />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    name={`playerStats.${index}.RBI`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>RBI</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} className="w-16" />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    name={`playerStats.${index}.BB`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>BB</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} className="w-16" />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    name={`playerStats.${index}.SO`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>SO</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} className="w-16" />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                <div key={field.id} className="border p-4 rounded-lg space-y-4">
+                  <div className="flex items-center justify-between">
+                    <FormField
+                      control={form.control}
+                      name={`playerStats.${index}.playerId`}
+                      render={({ field }) => (
+                        <FormItem className="flex-grow max-w-[200px]">
+                          <FormLabel>Player</FormLabel>
+                          <FormControl>
+                            <PlayerCombobox players={players} value={field.value} onChange={field.onChange} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {/* Basic Stats Row */}
+                  <div className="grid grid-cols-4 gap-2">
+                    <FormField
+                      name={`playerStats.${index}.PA`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>PA</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} className="w-full" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      name={`playerStats.${index}.AB`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>AB</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} className="w-full" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      name={`playerStats.${index}.R`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>R</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} className="w-full" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      name={`playerStats.${index}.H`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>H</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} className="w-full" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Hit Types Row */}
+                  <div className="grid grid-cols-4 gap-2">
+                    <FormField
+                      name={`playerStats.${index}.1B`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>1B</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} className="w-full" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      name={`playerStats.${index}.2B`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>2B</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} className="w-full" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      name={`playerStats.${index}.3B`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>3B</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} className="w-full" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      name={`playerStats.${index}.HR`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>HR</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} className="w-full" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Other Stats Row */}
+                  <div className="grid grid-cols-5 gap-2">
+                    <FormField
+                      name={`playerStats.${index}.RBI`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>RBI</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} className="w-full" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      name={`playerStats.${index}.BB`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>BB</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} className="w-full" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      name={`playerStats.${index}.SO`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SO</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} className="w-full" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      name={`playerStats.${index}.HBP`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>HBP</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} className="w-full" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      name={`playerStats.${index}.SF`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SF</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} className="w-full" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               ))}
+
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => append({ playerId: "", PA: 0, AB: 0, H: 0, RBI: 0, BB: 0, SO: 0 })}
+                onClick={() =>
+                  append({
+                    playerId: "",
+                    PA: 0,
+                    AB: 0,
+                    R: 0,
+                    H: 0,
+                    RBI: 0,
+                    BB: 0,
+                    SO: 0,
+                    HBP: 0,
+                    SF: 0,
+                    "1B": 0,
+                    "2B": 0,
+                    "3B": 0,
+                    HR: 0,
+                  })
+                }
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Player to Game
               </Button>
             </div>
-            <Button type="submit" disabled={isPending}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Changes
-            </Button>
+
+            <div className="flex justify-end space-x-2 pt-4 border-t">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
+              </Button>
+            </div>
           </form>
         </Form>
       </DialogContent>

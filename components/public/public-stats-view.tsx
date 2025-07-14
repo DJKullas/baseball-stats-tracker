@@ -16,6 +16,8 @@ type AggregatedStats = {
   RBI: number
   BB: number
   SO: number
+  HBP: number
+  SF: number
   "1B": number
   "2B": number
   "3B": number
@@ -30,6 +32,8 @@ const initialStats: AggregatedStats = {
   RBI: 0,
   BB: 0,
   SO: 0,
+  HBP: 0,
+  SF: 0,
   "1B": 0,
   "2B": 0,
   "3B": 0,
@@ -104,6 +108,18 @@ export default function PublicStatsView({
     return (H / AB).toFixed(3).toString()
   }
 
+  const getOnBasePercentage = (H: number, BB: number, HBP: number, AB: number, SF: number) => {
+    const totalPlateAppearances = AB + BB + HBP + SF
+    if (totalPlateAppearances === 0) return ".000"
+    return ((H + BB + HBP) / totalPlateAppearances).toFixed(3).toString()
+  }
+
+  const getSluggingPercentage = (singles: number, doubles: number, triples: number, homeRuns: number, AB: number) => {
+    if (AB === 0) return ".000"
+    const totalBases = singles + doubles * 2 + triples * 3 + homeRuns * 4
+    return (totalBases / AB).toFixed(3).toString()
+  }
+
   const getSelectedPeriodName = () => {
     if (selectedGameId !== "all") {
       const game = games.find((g) => g.id === selectedGameId)
@@ -171,10 +187,18 @@ export default function PublicStatsView({
                 <TableHead className="text-right">AB</TableHead>
                 <TableHead className="text-right">R</TableHead>
                 <TableHead className="text-right">H</TableHead>
+                <TableHead className="text-right">1B</TableHead>
+                <TableHead className="text-right">2B</TableHead>
+                <TableHead className="text-right">3B</TableHead>
+                <TableHead className="text-right">HR</TableHead>
                 <TableHead className="text-right">RBI</TableHead>
                 <TableHead className="text-right">BB</TableHead>
                 <TableHead className="text-right">SO</TableHead>
+                <TableHead className="text-right">HBP</TableHead>
+                <TableHead className="text-right">SF</TableHead>
                 <TableHead className="text-right">AVG</TableHead>
+                <TableHead className="text-right">OBP</TableHead>
+                <TableHead className="text-right">SLG</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -188,10 +212,22 @@ export default function PublicStatsView({
                     <TableCell className="text-right">{stats.AB}</TableCell>
                     <TableCell className="text-right">{stats.R}</TableCell>
                     <TableCell className="text-right">{stats.H}</TableCell>
+                    <TableCell className="text-right">{stats["1B"]}</TableCell>
+                    <TableCell className="text-right">{stats["2B"]}</TableCell>
+                    <TableCell className="text-right">{stats["3B"]}</TableCell>
+                    <TableCell className="text-right">{stats.HR}</TableCell>
                     <TableCell className="text-right">{stats.RBI}</TableCell>
                     <TableCell className="text-right">{stats.BB}</TableCell>
                     <TableCell className="text-right">{stats.SO}</TableCell>
+                    <TableCell className="text-right">{stats.HBP}</TableCell>
+                    <TableCell className="text-right">{stats.SF}</TableCell>
                     <TableCell className="text-right font-mono">{getBattingAverage(stats.H, stats.AB)}</TableCell>
+                    <TableCell className="text-right font-mono">
+                      {getOnBasePercentage(stats.H, stats.BB, stats.HBP, stats.AB, stats.SF)}
+                    </TableCell>
+                    <TableCell className="text-right font-mono">
+                      {getSluggingPercentage(stats["1B"], stats["2B"], stats["3B"], stats.HR, stats.AB)}
+                    </TableCell>
                   </TableRow>
                 )
               })}

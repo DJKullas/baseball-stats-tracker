@@ -40,19 +40,23 @@ export default function TeamList({ initialTeams }: { initialTeams: TeamWithPlaye
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <p className="font-semibold">{team.name}</p>
-                  <Badge variant="outline" className="font-mono text-xs">
-                    {team.sms_code}
-                  </Badge>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 w-6 p-0"
-                    onClick={() => copyToClipboard(team.sms_code, team.id)}
-                  >
-                    <span className="sr-only">Copy SMS code</span>
-                    {copiedTeamId === team.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  </Button>
+                  {team.sms_code && (
+                    <>
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {team.sms_code}
+                      </Badge>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0"
+                        onClick={() => copyToClipboard(team.sms_code, team.id)}
+                      >
+                        <span className="sr-only">Copy SMS code</span>
+                        {copiedTeamId === team.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      </Button>
+                    </>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">{team.players[0]?.count || 0} Players</p>
               </div>

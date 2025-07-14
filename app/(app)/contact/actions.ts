@@ -39,3 +39,9 @@ export async function submitContactForm(formData: FormData): Promise<{ ok: boole
     return { ok: false }
   }
 }
+
+/**
+ * submitContact is an alias of submitContactForm to satisfy the deployment check
+ * while keeping backward compatibility with any existing imports.
+ */
+export const submitContact = submitContactForm

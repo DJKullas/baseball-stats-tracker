@@ -1,83 +1,85 @@
 "use client"
 
-import type React from "react"
-
-import { useActionState, useEffect, useRef, useCallback } from "react"
+import { useState, useRef, type FormEvent } from "react"
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3"
-import { submitContactForm, type FormState } from "./actions"
-import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Terminal } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
+import { submitContact } from "./actions" // existing server action
 
 export default function ContactForm() {
-  const initialState: FormState = { message: "", status: "idle" }
-  const [state, formAction, isPending] = useActionState(submitContactForm, initialState)
-  const formRef = useRef<HTMLFormElement>(null)
+  const formRef = useRef<HTMLFormElement | null>(null)
+  const { toast } = useToast()
   const { executeRecaptcha } = useGoogleReCaptcha()
+  const [pending, setPending] = useState(false)
 
-  useEffect(() => {
-    if (state.status === "success") {
-      formRef.current?.reset()
-    }
-  }, [state])
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!formRef.current) return
 
-  const handleFormSubmit = useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault()
-      if (!executeRecaptcha) {
-        console.error("Recaptcha not available")
-        return
+    try {
+      setPending(true)
+
+      // Build FormData from the REAL form element
+      const formData = new FormData(formRef.current)
+
+      // Get reCAPTCHA token and append to the form data
+      if (executeRecaptcha) {
+        const token = await executeRecaptcha("contact_form")
+        formData.append("g-recaptcha-response", token)
       }
-      const token = await executeRecaptcha("contact_form")
-      const formData = new FormData(event.currentTarget)
-      formData.set("g-recaptcha-response", token)
-      formAction(formData)
-    },
-    [executeRecaptcha, formAction],
-  )
+
+      const result = await submitContact(formData)
+
+      if (result?.error) {
+        toast({
+          title: "Submission failed",
+          description: result.error,
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Message sent",
+          description: "We’ll reply as soon as possible.",
+        })
+        formRef.current.reset()
+      }
+    } catch (err) {
+      toast({
+        title: "Unexpected error",
+        description: "Please try again later.",
+        variant: "destructive",
+      })
+      console.error(err)
+    } finally {
+      setPending(false)
+    }
+  }
 
   return (
-    <form ref={formRef} onSubmit={handleFormSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
-          <Input id="name" name="name" placeholder="Enter your name" required />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" placeholder="Enter your email" required />
-        </div>
-      </div>
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6 max-w-xl mx-auto">
       <div className="space-y-2">
-        <Label htmlFor="subject">Subject</Label>
-        <Input id="subject" name="subject" placeholder="Enter the subject" required />
+        <Label htmlFor="name">Name</Label>
+        <Input id="name" name="name" required />
       </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input id="email" name="email" type="email" required />
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="message">Message</Label>
-        <Textarea id="message" name="message" placeholder="Enter your message" className="min-h-[150px]" required />
+        <Textarea id="message" name="message" rows={6} required />
       </div>
 
-      {state.status === "error" && (
-        <Alert variant="destructive">
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>An Error Occurred</AlertTitle>
-          <AlertDescription>{state.message}</AlertDescription>
-        </Alert>
-      )}
+      {/* Hidden input for reCAPTCHA token (filled in handleSubmit) */}
+      <input type="hidden" name="g-recaptcha-response" />
 
-      {state.status === "success" && (
-        <Alert variant="default" className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>Message Sent!</AlertTitle>
-          <AlertDescription>{state.message}</AlertDescription>
-        </Alert>
-      )}
-
-      <Button type="submit" disabled={isPending} className="w-full md:w-auto">
-        {isPending ? "Submitting..." : "Submit"}
+      <Button type="submit" disabled={pending} className="w-full">
+        {pending ? "Sending…" : "Send message"}
       </Button>
     </form>
   )

@@ -33,6 +33,13 @@ function ContactFormInner() {
     getToken()
   }, [executeRecaptcha])
 
+  // Create a wrapper function that ensures we get the FormData properly
+  const handleFormAction = async (formData: FormData) => {
+    // Add the reCAPTCHA token to the existing FormData
+    formData.set("g-recaptcha-response", token)
+    return formAction(formData)
+  }
+
   return (
     <Card className="w-full max-w-lg">
       <CardHeader>
@@ -43,10 +50,7 @@ function ContactFormInner() {
       </CardHeader>
 
       <CardContent>
-        <form action={formAction} className="space-y-4">
-          {/* Hidden reCAPTCHA token */}
-          <input type="hidden" name="g-recaptcha-response" value={token} />
-
+        <form action={handleFormAction} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
             <Input id="name" name="name" placeholder="Your name" required />

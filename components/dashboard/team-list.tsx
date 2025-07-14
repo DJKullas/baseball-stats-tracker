@@ -1,48 +1,36 @@
 "use client"
 
-import type { Team } from "@/lib/types"
 import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { ArrowUpRight } from "lucide-react"
-import NewTeamDialog from "./new-team-dialog"
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 
-type TeamWithPlayerCount = Team & {
-  players: { count: number }[]
+export interface Team {
+  id: string
+  name: string
 }
 
-export default function TeamList({ initialTeams }: { initialTeams: TeamWithPlayerCount[] }) {
+interface TeamListProps {
+  teams: Team[]
+}
+
+/**
+ * Displays a grid of teams linking to their dashboard pages.
+ */
+export default function TeamList({ teams }: TeamListProps) {
+  if (!teams?.length) {
+    return <p className="text-muted-foreground">No teams yet&nbsp;— create one!</p>
+  }
+
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Your Teams</CardTitle>
-          <CardDescription>Select a team to view detailed stats and manage players.</CardDescription>
-        </div>
-        <NewTeamDialog />
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        {initialTeams.length > 0 ? (
-          initialTeams.map((team) => (
-            <div key={team.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-accent">
-              <div>
-                <p className="font-semibold">{team.name}</p>
-                <p className="text-xs text-muted-foreground">{team.players[0]?.count || 0} Players</p>
-              </div>
-              <Button asChild variant="secondary" size="sm">
-                <Link href={`/team/${team.id}`}>
-                  View Team <ArrowUpRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          ))
-        ) : (
-          <div className="flex flex-col items-center gap-2 text-center p-8 border-2 border-dashed rounded-lg">
-            <h3 className="text-lg font-bold tracking-tight">You have no teams yet.</h3>
-            <p className="text-sm text-muted-foreground">Get started by creating your first team.</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {teams.map((team) => (
+        <Link key={team.id} href={`/app/team/${team.id}`}>
+          <Card className="hover:ring-2 hover:ring-primary transition">
+            <CardHeader>
+              <CardTitle className="truncate">{team.name}</CardTitle>
+            </CardHeader>
+          </Card>
+        </Link>
+      ))}
+    </div>
   )
 }

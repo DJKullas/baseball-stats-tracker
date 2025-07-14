@@ -1,127 +1,129 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { Copy, Check, XIcon, Loader2 } from "lucide-react"
-import { updateWhitelist } from "@/app/(app)/team/[teamId]/settings/actions"
-import { toast } from "sonner"
-import { normalizePhoneNumber } from "@/lib/utils"
+import { Copy, Check, Phone, MessageSquare } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
-type TeamSettingsProps = {
-  teamId: string
-  smsCode: string
-  initialWhitelistedNumbers: string[] | null
+export interface TeamSettingsProps {
+  team: {
+    id: string
+    name: string
+    sms_code: string
+    is_public: boolean
+  }
+  twilioPhoneNumber?: string
+  onUpdateTeam: (updates: { name?: string; is_public?: boolean }) => void
 }
 
-export default function TeamSettings({ teamId, smsCode, initialWhitelistedNumbers }: TeamSettingsProps) {
-  const [hasCopied, setHasCopied] = useState(false)
-  const [isPending, setIsPending] = useState(false)
-  const [phoneNumbers, setPhoneNumbers] = useState<string[]>(initialWhitelistedNumbers || [])
-  const [currentPhoneNumber, setCurrentPhoneNumber] = useState("")
+export function TeamSettings({ team, twilioPhoneNumber, onUpdateTeam }: TeamSettingsProps) {
+  const [teamName, setTeamName] = useState(team.name)
+  const [isPublic, setIsPublic] = useState(team.is_public)
+  const [copied, setCopied] = useState(false)
+  const { toast } = useToast()
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(smsCode)
-    setHasCopied(true)
-    toast.success("SMS code copied to clipboard!")
-    setTimeout(() => setHasCopied(false), 2000)
+  const handleSave = () => {
+    onUpdateTeam({ name: teamName, is_public: isPublic })
   }
 
-  const addPhoneNumber = () => {
-    if (!currentPhoneNumber) return
-    const normalized = normalizePhoneNumber(currentPhoneNumber)
-    if (phoneNumbers.includes(normalized)) {
-      toast.info("This phone number has already been added.")
-    } else {
-      setPhoneNumbers([...phoneNumbers, normalized])
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      toast({
+        title: "Copied!",
+        description: "SMS code copied to clipboard",
+      })
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      /* ignore */
     }
-    setCurrentPhoneNumber("")
-  }
-
-  const removePhoneNumber = (numberToRemove: string) => {
-    setPhoneNumbers(phoneNumbers.filter((num) => num !== numberToRemove))
-  }
-
-  const handleSave = async () => {
-    setIsPending(true)
-    const result = await updateWhitelist(teamId, phoneNumbers)
-    if (result.success) {
-      toast.success("Whitelist updated successfully!")
-    } else {
-      toast.error("Failed to update whitelist", { description: result.error })
-    }
-    setIsPending(false)
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>SMS & Whitelist Settings</CardTitle>
-        <CardDescription>
-          Configure which phone numbers can submit stats via SMS and find your team's unique submission code.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="sms-code">Your Team's SMS Code</Label>
-          <div className="flex items-center space-x-2">
-            <Input id="sms-code" value={smsCode} readOnly className="font-mono" />
-            <Button type="button" size="sm" className="px-3" onClick={copyToClipboard}>
-              <span className="sr-only">Copy</span>
-              {hasCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+    <div className="space-y-6">
+      {/* SMS Information Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            SMS Scorebook Upload
+          </CardTitle>
+          <CardDescription>Send scorebook photos via SMS to automatically extract statistics</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {twilioPhoneNumber && (
+            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+              <Phone className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Send photos to:</span>
+              <Badge variant="outline" className="font-mono">
+                {twilioPhoneNumber}
+              </Badge>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Your team code:</span>
+            <Badge variant="secondary" className="font-mono">
+              {team.sms_code}
+            </Badge>
+            <Button variant="ghost" size="sm" onClick={() => copyToClipboard(team.sms_code)} className="h-6 w-6 p-0">
+              {copied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Include this code as the first word in your text message when submitting a scorebook image.
-          </p>
-        </div>
-        <div className="space-y-2">
-          <Label>Whitelisted Phone Numbers</Label>
-          <div className="flex gap-2">
+
+          <div className="text-sm text-muted-foreground">
+            <p>To upload a scorebook:</p>
+            <ol className="list-decimal list-inside mt-1 space-y-1">
+              <li>Take a photo of your scorebook</li>
+              <li>Text the photo to {twilioPhoneNumber || "the SMS number"}</li>
+              <li>
+                Include your team code "<span className="font-mono">{team.sms_code}</span>" in the message
+              </li>
+              <li>Statistics will be extracted and added to your team</li>
+            </ol>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Team Settings Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Team Settings</CardTitle>
+          <CardDescription>Manage your team&#39;s basic information and privacy settings</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="team-name">Team Name</Label>
             <Input
-              placeholder="e.g., +15551234567"
-              value={currentPhoneNumber}
-              onChange={(e) => setCurrentPhoneNumber(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  addPhoneNumber()
-                }
-              }}
+              id="team-name"
+              value={teamName}
+              onChange={(e) => setTeamName(e.target.value)}
+              placeholder="Enter team name"
             />
-            <Button type="button" onClick={addPhoneNumber}>
-              Add
-            </Button>
           </div>
-          <div className="flex flex-wrap gap-2 pt-2">
-            {phoneNumbers.length > 0 ? (
-              phoneNumbers.map((num) => (
-                <Badge key={num} variant="secondary" className="flex items-center gap-1">
-                  {num}
-                  <button
-                    type="button"
-                    onClick={() => removePhoneNumber(num)}
-                    className="ml-1 rounded-full hover:bg-muted"
-                  >
-                    <XIcon className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">No phone numbers whitelisted yet.</p>
-            )}
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="public-toggle">Public Team</Label>
+              <p className="text-sm text-muted-foreground">Allow others to view your team&#39;s statistics</p>
+            </div>
+            <Switch id="public-toggle" checked={isPublic} onCheckedChange={setIsPublic} />
           </div>
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button onClick={handleSave} disabled={isPending}>
-          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Save Changes
-        </Button>
-      </CardFooter>
-    </Card>
+
+          <Button onClick={handleSave} className="w-full">
+            Save Changes
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
+
+export default TeamSettings

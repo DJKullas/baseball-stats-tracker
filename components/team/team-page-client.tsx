@@ -101,7 +101,7 @@ export default function TeamPageClient({
       </div>
 
       <Tabs defaultValue="games">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 p-1">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 p-1 mb-4 md:mb-0">
           <TabsTrigger value="stats">Stats</TabsTrigger>
           <TabsTrigger value="games">Games & Entry</TabsTrigger>
           <TabsTrigger value="roster">Roster</TabsTrigger>

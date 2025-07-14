@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useActionState, useEffect, useState } from "react"
 import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3"
 import { submitContactForm, type ContactFormState } from "./actions"
@@ -35,37 +33,17 @@ function ContactFormInner() {
     getToken()
   }, [executeRecaptcha])
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-
-    if (!executeRecaptcha) {
-      console.error("Execute recaptcha not yet available")
-      return
-    }
-
-    // Get fresh token before submission
-    const freshToken = await executeRecaptcha("contactForm")
-    setToken(freshToken)
-
-    // Create FormData from the form
-    const formData = new FormData(event.currentTarget)
-    formData.set("g-recaptcha-response", freshToken)
-
-    // Call the server action
-    formAction(formData)
-  }
-
   return (
     <Card className="w-full max-w-lg">
       <CardHeader>
         <CardTitle className="text-2xl">Contact&nbsp;Us</CardTitle>
         <CardDescription>
-          Have a question or feedback? Send us a message and we'll get back to you shortly.
+          Have a question or feedback? Send us a message and we’ll get back to you shortly.
         </CardDescription>
       </CardHeader>
 
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form action={formAction} className="space-y-4">
           {/* Hidden reCAPTCHA token */}
           <input type="hidden" name="g-recaptcha-response" value={token} />
 

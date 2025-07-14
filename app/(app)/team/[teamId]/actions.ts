@@ -1,14 +1,10 @@
 "use server"
 
-import { createClient } from "@supabase/supabase-js"
+import { createServerClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import * as z from "zod"
 import type { GameWithRelations, Player } from "@/lib/types"
 import { processImage } from "@/lib/ai-processing"
-
-const supabaseUrl = process.env.SUPABASE_URL!
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseKey)
 
 const statSchema = z.object({
   playerId: z.string().min(1, "Player is required."),
@@ -47,6 +43,7 @@ const playerStatsUpdateSchema = z.array(
 )
 
 async function getOrCreatePlayer(teamId: string, playerNameOrId: string): Promise<[Player, boolean]> {
+  const supabase = createServerClient()
   // If the value is already a UUID, we can assume it's an existing player.
   if (z.string().uuid().safeParse(playerNameOrId).success) {
     const { data: player, error } = await supabase.from("players").select("*").eq("id", playerNameOrId).single()
@@ -89,6 +86,7 @@ async function getOrCreatePlayer(teamId: string, playerNameOrId: string): Promis
 }
 
 export async function addGameResults(teamId: string, values: z.infer<typeof gameFormSchema>) {
+  const supabase = createServerClient()
   try {
     const { data: newGame, error: gameError } = await supabase
       .from("games")
@@ -129,7 +127,7 @@ export async function addGameResults(teamId: string, values: z.infer<typeof game
       .single()
     if (finalFetchError) throw new Error("Game created, but failed to fetch updated data.")
 
-    revalidatePath(`/app/team/${teamId}`)
+    revalidatePath(`/team/${teamId}`)
     return { success: true, data: { newGame: gameWithRelations as GameWithRelations, newPlayers } }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -137,9 +135,10 @@ export async function addGameResults(teamId: string, values: z.infer<typeof game
 }
 
 export async function deleteGame(gameId: string, teamId: string) {
+  const supabase = createServerClient()
   const { error } = await supabase.from("games").delete().eq("id", gameId)
   if (error) return { success: false, error: "Failed to delete game." }
-  revalidatePath(`/app/team/${teamId}`)
+  revalidatePath(`/team/${teamId}`)
   return { success: true }
 }
 
@@ -148,6 +147,7 @@ export async function updateGameResults(
   teamId: string,
   playerStats: z.infer<typeof playerStatsUpdateSchema>,
 ) {
+  const supabase = createServerClient()
   try {
     const newPlayers: Player[] = []
     const resolvedPlayerStats = await Promise.all(
@@ -180,7 +180,7 @@ export async function updateGameResults(
       .single()
     if (finalFetchError) throw finalFetchError
 
-    revalidatePath(`/app/team/${teamId}`)
+    revalidatePath(`/team/${teamId}`)
     return { success: true, data: { updatedGame: gameWithRelations as GameWithRelations, newPlayers } }
   } catch (error: any) {
     console.error("Error updating game:", error)
@@ -189,6 +189,7 @@ export async function updateGameResults(
 }
 
 export async function processImageUrlAndCreateGame(teamId: string, seasonId: string, gameDate: Date, imageUrl: string) {
+  const supabase = createServerClient()
   try {
     const statsData = await processImage(imageUrl)
     if (!statsData || statsData.length === 0) throw new Error("AI failed to process image or no stats were found.")
@@ -243,7 +244,7 @@ export async function processImageUrlAndCreateGame(teamId: string, seasonId: str
       .single()
     if (finalFetchError) throw new Error("Game created, but failed to fetch updated data.")
 
-    revalidatePath(`/app/team/${teamId}`)
+    revalidatePath(`/team/${teamId}`)
     return { success: true, data: { newGame: gameWithRelations as GameWithRelations, newPlayers } }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -251,10 +252,11 @@ export async function processImageUrlAndCreateGame(teamId: string, seasonId: str
 }
 
 export async function addPlayer(teamId: string, name: string) {
+  const supabase = createServerClient()
   try {
     const { data, error } = await supabase.from("players").insert({ team_id: teamId, name: name }).select().single()
     if (error) return { success: false, error: "Failed to create player." }
-    revalidatePath(`/app/team/${teamId}`)
+    revalidatePath(`/team/${teamId}`)
     return { success: true, data: data }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -262,10 +264,11 @@ export async function addPlayer(teamId: string, name: string) {
 }
 
 export async function addSeason(teamId: string, name: string) {
+  const supabase = createServerClient()
   try {
     const { data, error } = await supabase.from("seasons").insert({ team_id: teamId, name: name }).select().single()
     if (error) return { success: false, error: "Failed to create season." }
-    revalidatePath(`/app/team/${teamId}`)
+    revalidatePath(`/team/${teamId}`)
     return { success: true, data: data }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -273,6 +276,7 @@ export async function addSeason(teamId: string, name: string) {
 }
 
 export async function updatePlayerStats(teamId: string, statsToUpdate: { resultId: string; stats: any }[]) {
+  const supabase = createServerClient()
   try {
     const updates = statsToUpdate.map((item) =>
       supabase.from("results").update({ stats: item.stats }).eq("id", item.resultId),
@@ -280,26 +284,10 @@ export async function updatePlayerStats(teamId: string, statsToUpdate: { resultI
     const results = await Promise.all(updates)
     const firstError = results.find((r) => r.error)
     if (firstError) throw firstError.error
-    revalidatePath(`/app/team/${teamId}`)
+    revalidatePath(`/team/${teamId}`)
     return { success: true }
   } catch (error: any) {
     console.error("Error updating player stats:", error)
     return { success: false, error: "Failed to update player stats." }
   }
-}
-
-/**
- * Updates a team record with the given fields.
- * Only name and is_public are allowed to change.
- */
-export async function updateTeam(teamId: string, updates: { name?: string; is_public?: boolean }) {
-  const { error } = await supabase.from("teams").update(updates).eq("id", teamId)
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  // Re-fetch data on pages using this team
-  revalidatePath(`/app/team/${teamId}`)
-  revalidatePath(`/public/team/${teamId}`)
 }

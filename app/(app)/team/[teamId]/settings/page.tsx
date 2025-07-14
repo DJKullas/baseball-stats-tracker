@@ -1,50 +1,41 @@
-import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { TeamSettings } from "@/components/team/team-settings"
-import { updateTeam } from "../actions"
+import { getAuthStatus } from "@/lib/auth-helpers"
+import { redirect } from "next/navigation"
+import TeamSettings from "@/components/team/team-settings"
 
-interface PageProps {
-  params: Promise<{ teamId: string }>
-}
+export default async function TeamSettingsPage({ params }: { params: { teamId: string } }) {
+  const { isLoggedIn, user } = await getAuthStatus()
 
-export default async function SettingsPage({ params }: PageProps) {
-  const { teamId } = await params
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
+  if (!isLoggedIn) {
     redirect("/login")
   }
 
-  const { data: team, error } = await supabase
+  const supabase = createClient()
+
+  // Verify the user owns this team
+  const { data: team } = await supabase
     .from("teams")
-    .select("*")
-    .eq("id", teamId)
-    .eq("user_id", user.id)
+    .select("id, name, sms_code, whitelisted_numbers")
+    .eq("id", params.teamId)
+    .eq("user_id", user!.id)
     .single()
 
-  if (error || !team) {
+  if (!team) {
     redirect("/dashboard")
-  }
-
-  const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER
-
-  const handleUpdateTeam = async (updates: { name?: string; is_public?: boolean }) => {
-    "use server"
-    await updateTeam(teamId, updates)
   }
 
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Team Settings</h1>
-        <p className="text-muted-foreground">Manage your team's settings and SMS upload configuration</p>
+        <h1 className="text-2xl font-bold">Team Settings</h1>
+        <p className="text-muted-foreground">Configure SMS settings and manage access for {team.name}.</p>
       </div>
-
-      <TeamSettings team={team} twilioPhoneNumber={twilioPhoneNumber} onUpdateTeam={handleUpdateTeam} />
+      <TeamSettings
+        teamId={team.id}
+        smsCode={team.sms_code}
+        initialWhitelistedNumbers={team.whitelisted_numbers}
+        twilioPhoneNumber={process.env.TWILIO_PHONE_NUMBER}
+      />
     </div>
   )
 }

@@ -100,36 +100,13 @@ export default function TeamPageClient({
         </div>
       </div>
 
-      <Tabs defaultValue="games" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto p-1">
-          <TabsTrigger
-            value="stats"
-            className="text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5 data-[state=active]:bg-background data-[state=active]:text-foreground"
-          >
-            <span className="hidden sm:inline">Statistics</span>
-            <span className="sm:hidden">Stats</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="games"
-            className="text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5 data-[state=active]:bg-background data-[state=active]:text-foreground"
-          >
-            <span className="hidden sm:inline">Games & Entry</span>
-            <span className="sm:hidden">Games</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="roster"
-            className="text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5 data-[state=active]:bg-background data-[state=active]:text-foreground"
-          >
-            Roster
-          </TabsTrigger>
-          <TabsTrigger
-            value="settings"
-            className="text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2.5 data-[state=active]:bg-background data-[state=active]:text-foreground"
-          >
-            Settings
-          </TabsTrigger>
+      <Tabs defaultValue="games">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+          <TabsTrigger value="stats">Stats</TabsTrigger>
+          <TabsTrigger value="games">Games & Entry</TabsTrigger>
+          <TabsTrigger value="roster">Roster</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
-
         <TabsContent value="stats" className="mt-6">
           <StatsView
             teamId={team.id}
@@ -139,7 +116,6 @@ export default function TeamPageClient({
             onDataShouldRefresh={handleDataShouldRefresh}
           />
         </TabsContent>
-
         <TabsContent value="games" className="mt-6 space-y-6">
           <ManualEntry teamId={team.id} players={players} seasons={seasons} onGameAdded={handleGameAdded} />
 
@@ -170,14 +146,12 @@ export default function TeamPageClient({
             />
           </div>
         </TabsContent>
-
         <TabsContent value="roster" className="mt-6">
           <div className="grid md:grid-cols-2 gap-6">
             <PlayerTable players={players} />
             <AddPlayerForm teamId={team.id} onPlayerAdded={handlePlayerAdded} />
           </div>
         </TabsContent>
-
         <TabsContent value="settings" className="mt-6">
           <TeamSettings
             teamId={team.id}

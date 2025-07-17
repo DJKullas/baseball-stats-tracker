@@ -101,11 +101,19 @@ export default function TeamPageClient({
       </div>
 
       <Tabs defaultValue="games">
-        <TabsList className="grid w-full grid-cols-2 grid-rows-2 md:grid-cols-4 md:grid-rows-1 gap-1 p-1 mb-8 md:mb-0">
-          <TabsTrigger value="stats">Stats</TabsTrigger>
-          <TabsTrigger value="games">Games & Entry</TabsTrigger>
-          <TabsTrigger value="roster">Roster</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-3 p-2 h-auto mb-8 md:mb-0">
+          <TabsTrigger value="stats" className="h-10">
+            Stats
+          </TabsTrigger>
+          <TabsTrigger value="games" className="h-10">
+            Games & Entry
+          </TabsTrigger>
+          <TabsTrigger value="roster" className="h-10">
+            Roster
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="h-10">
+            Settings
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="stats" className="mt-6">
           <StatsView

@@ -53,7 +53,17 @@ export default function OnboardingForm() {
   const prevStep = () => setStep((s) => s - 1)
 
   const handleSubmit = async () => {
-    if (data.phoneNumbers.length === 0) {
+    const finalPhoneNumbers = [...data.phoneNumbers]
+
+    // If there's a number in the input that hasn't been added, add it now.
+    if (currentPhoneNumber.trim()) {
+      const normalized = normalizePhoneNumber(currentPhoneNumber)
+      if (!finalPhoneNumbers.includes(normalized)) {
+        finalPhoneNumbers.push(normalized)
+      }
+    }
+
+    if (finalPhoneNumbers.length === 0) {
       toast.error("Please add at least one phone number.")
       return
     }
@@ -62,7 +72,10 @@ export default function OnboardingForm() {
     toast.loading("Finalizing setup...")
 
     try {
-      const result = await completeOnboarding(data)
+      const result = await completeOnboarding({
+        teamName: data.teamName,
+        phoneNumbers: finalPhoneNumbers,
+      })
       toast.dismiss()
 
       if (result.success && result.data?.checkoutUrl) {

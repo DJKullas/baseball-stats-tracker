@@ -1,65 +1,86 @@
 "use client"
 
-import type React from "react"
-import { useRef } from "react"
-import { useActionState } from "react"
-import { submitContact, type ContactResponse } from "./actions"
+import { useState, useRef, type FormEvent } from "react"
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
+import { submitContact } from "./actions" // existing server action
 
 export default function ContactForm() {
-  const formRef = useRef<HTMLFormElement>(null)
-  const [state, formAction, isPending] = useActionState<ContactResponse, FormData>(submitContact, { ok: false })
+  const formRef = useRef<HTMLFormElement | null>(null)
+  const { toast } = useToast()
+  const { executeRecaptcha } = useGoogleReCaptcha()
+  const [pending, setPending] = useState(false)
 
-  const handleOnSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const formData = new FormData(formRef.current!)
-    formAction(formData)
+    if (!formRef.current) return
+
+    try {
+      setPending(true)
+
+      // Build FormData from the REAL form element
+      const formData = new FormData(formRef.current)
+
+      // Get reCAPTCHA token and append to the form data
+      if (executeRecaptcha) {
+        const token = await executeRecaptcha("contact_form")
+        formData.append("g-recaptcha-response", token)
+      }
+
+      const result = await submitContact(formData)
+
+      if (result?.error) {
+        toast({
+          title: "Submission failed",
+          description: result.error,
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Message sent",
+          description: "We’ll reply as soon as possible.",
+        })
+        formRef.current.reset()
+      }
+    } catch (err) {
+      toast({
+        title: "Unexpected error",
+        description: "Please try again later.",
+        variant: "destructive",
+      })
+      console.error(err)
+    } finally {
+      setPending(false)
+    }
   }
 
   return (
-    <form ref={formRef} onSubmit={handleOnSubmit} className="mx-auto max-w-md space-y-4 p-4">
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-          Name
-        </label>
-        <input
-          type="text"
-          id="name"
-          name="name"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6 max-w-xl mx-auto">
+      <div className="space-y-2">
+        <Label htmlFor="name">Name</Label>
+        <Input id="name" name="name" required />
       </div>
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email
-        </label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
+
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input id="email" name="email" type="email" required />
       </div>
-      <div>
-        <label htmlFor="message" className="block text-sm font-medium text-gray-700">
-          Message
-        </label>
-        <textarea
-          id="message"
-          name="message"
-          rows={4}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
+
+      <div className="space-y-2">
+        <Label htmlFor="message">Message</Label>
+        <Textarea id="message" name="message" rows={6} required />
       </div>
-      <div>
-        <button
-          type="submit"
-          className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          disabled={isPending}
-        >
-          {isPending ? "Submitting..." : "Submit"}
-        </button>
-        {state && state.message && <p className={state.ok ? "text-green-500" : "text-red-500"}>{state.message}</p>}
-      </div>
+
+      {/* Hidden input for reCAPTCHA token (filled in handleSubmit) */}
+      <input type="hidden" name="g-recaptcha-response" />
+
+      <Button type="submit" disabled={pending} className="w-full">
+        {pending ? "Sending…" : "Send message"}
+      </Button>
     </form>
   )
 }

@@ -2,31 +2,8 @@
 
 import type React from "react"
 import { useRef } from "react"
-import { useActionState } from "react-server-dom-webpack/client"
-
-type ContactResponse = {
-  ok: boolean
-  message?: string
-}
-
-async function submitContact(prevState: ContactResponse, formData: FormData): Promise<ContactResponse> {
-  "use server"
-
-  // Simulate a successful submission
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  const name = formData.get("name") as string
-  const email = formData.get("email") as string
-  const message = formData.get("message") as string
-
-  if (!name || !email || !message) {
-    return { ok: false, message: "Please fill in all fields." }
-  }
-
-  console.log("Form Data:", { name, email, message })
-
-  return { ok: true, message: "Thank you for your message!" }
-}
+import { useActionState } from "react"
+import { submitContact, type ContactResponse } from "./actions"
 
 export default function ContactForm() {
   const formRef = useRef<HTMLFormElement>(null)

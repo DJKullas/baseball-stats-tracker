@@ -1,47 +1,44 @@
 "use server"
 
-/**
- * Minimal stub so build-time static analysis succeeds.
- * Replace with your real implementation when ready.
- */
-export async function submitContactForm(formData: FormData): Promise<{ ok: boolean }> {
-  // Simulate sending an email (replace with actual email sending logic)
-  const name = formData.get("name")
-  const email = formData.get("email")
-  const message = formData.get("message")
+import { Resend } from "resend"
+import { ContactFormEmail } from "@/components/emails/contact-form-email"
+import type { ContactResponse } from "./contact-page-client"
 
-  if (!name || typeof name !== "string") {
-    console.error("Invalid name")
-    return { ok: false }
+const resend = new Resend(process.env.RESEND_API_KEY)
+const recipientEmail = process.env.CONTACT_FORM_RECIPIENT_EMAIL
+
+export async function submitContact(prevState: ContactResponse, formData: FormData): Promise<ContactResponse> {
+  const name = formData.get("name")?.toString().trim() ?? ""
+  const email = formData.get("email")?.toString().trim() ?? ""
+  const message = formData.get("message")?.toString().trim() ?? ""
+
+  if (!name || !email || !message) {
+    return { ok: false, error: "All fields are required." }
   }
 
-  if (!email || typeof email !== "string") {
-    console.error("Invalid email")
-    return { ok: false }
+  if (!recipientEmail) {
+    console.error("CONTACT_FORM_RECIPIENT_EMAIL is not set.")
+    return { ok: false, error: "Could not send email. Server configuration error." }
   }
-
-  if (!message || typeof message !== "string") {
-    console.error("Invalid message")
-    return { ok: false }
-  }
-
-  console.log("Form Data:", { name, email, message })
 
   try {
-    // Replace this with your actual email sending logic (e.g., using Nodemailer, SendGrid, etc.)
-    console.log("Simulating email sending...")
-    await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate a delay
+    await resend.emails.send({
+      from: "StatTrack Contact Form <contact@stat-track.app>", // Replace with your verified Resend domain
+      to: recipientEmail,
+      subject: "New message from your StatTrack contact form",
+      reply_to: email,
+      react: ContactFormEmail({ name, email, message }),
+    })
 
-    console.log("Email sent successfully!")
     return { ok: true }
   } catch (error) {
-    console.error("Error sending email:", error)
-    return { ok: false }
+    console.error("Error sending email with Resend:", error)
+    return { ok: false, error: "There was an error sending your message. Please try again later." }
   }
 }
 
 /**
- * submitContact is an alias of submitContactForm to satisfy the deployment check
+ * submitContactForm is an alias of submitContact to satisfy the deployment check
  * while keeping backward compatibility with any existing imports.
  */
-export const submitContact = submitContactForm
+export { submitContact as submitContactForm }

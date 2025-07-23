@@ -1,47 +1,38 @@
 "use server"
 
-/**
- * Minimal stub so build-time static analysis succeeds.
- * Replace with your real implementation when ready.
- */
-export async function submitContactForm(formData: FormData): Promise<{ ok: boolean }> {
-  // Simulate sending an email (replace with actual email sending logic)
-  const name = formData.get("name")
-  const email = formData.get("email")
-  const message = formData.get("message")
+import { revalidatePath } from "next/cache"
+import { z } from "zod"
 
-  if (!name || typeof name !== "string") {
-    console.error("Invalid name")
-    return { ok: false }
+const schema = z.object({
+  name: z.string().min(3, { message: "Name must be at least 3 characters." }),
+  email: z.string().email({ message: "Invalid email address." }),
+  message: z.string().min(10, { message: "Message must be at least 10 characters." }),
+})
+
+export async function submitContact(prevState: any, formData: FormData) {
+  const validatedFields = schema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    message: formData.get("message"),
+  })
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Missing Fields. Failed to Submit.",
+    }
   }
-
-  if (!email || typeof email !== "string") {
-    console.error("Invalid email")
-    return { ok: false }
-  }
-
-  if (!message || typeof message !== "string") {
-    console.error("Invalid message")
-    return { ok: false }
-  }
-
-  console.log("Form Data:", { name, email, message })
 
   try {
-    // Replace this with your actual email sending logic (e.g., using Nodemailer, SendGrid, etc.)
-    console.log("Simulating email sending...")
-    await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate a delay
+    // Simulate sending data to a database or external service
+    console.log("Form data submitted:", validatedFields.data)
+    // In a real application, you would save the data to a database here
 
-    console.log("Email sent successfully!")
-    return { ok: true }
-  } catch (error) {
-    console.error("Error sending email:", error)
-    return { ok: false }
+    revalidatePath("/")
+    return { message: "Form submitted successfully!" }
+  } catch (e: any) {
+    return { message: "Failed to submit form." }
   }
 }
 
-/**
- * submitContact is an alias of submitContactForm to satisfy the deployment check
- * while keeping backward compatibility with any existing imports.
- */
-export const submitContact = submitContactForm
+export { submitContact as submitContactForm }

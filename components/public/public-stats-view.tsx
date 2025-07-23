@@ -178,62 +178,60 @@ export default function PublicStatsView({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Player</TableHead>
-                <TableHead className="text-right">PA</TableHead>
-                <TableHead className="text-right">AB</TableHead>
-                <TableHead className="text-right">R</TableHead>
-                <TableHead className="text-right">H</TableHead>
-                <TableHead className="text-right">1B</TableHead>
-                <TableHead className="text-right">2B</TableHead>
-                <TableHead className="text-right">3B</TableHead>
-                <TableHead className="text-right">HR</TableHead>
-                <TableHead className="text-right">RBI</TableHead>
-                <TableHead className="text-right">BB</TableHead>
-                <TableHead className="text-right">SO</TableHead>
-                <TableHead className="text-right">HBP</TableHead>
-                <TableHead className="text-right">SF</TableHead>
-                <TableHead className="text-right">AVG</TableHead>
-                <TableHead className="text-right">OBP</TableHead>
-                <TableHead className="text-right">SLG</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {playersToDisplay.map((player) => {
-                const stats = aggregatedStats[player.id]
-                if (!stats) return null // Safety check
-                return (
-                  <TableRow key={player.id}>
-                    <TableCell className="font-medium">{player.name}</TableCell>
-                    <TableCell className="text-right">{stats.PA}</TableCell>
-                    <TableCell className="text-right">{stats.AB}</TableCell>
-                    <TableCell className="text-right">{stats.R}</TableCell>
-                    <TableCell className="text-right">{stats.H}</TableCell>
-                    <TableCell className="text-right">{stats["1B"]}</TableCell>
-                    <TableCell className="text-right">{stats["2B"]}</TableCell>
-                    <TableCell className="text-right">{stats["3B"]}</TableCell>
-                    <TableCell className="text-right">{stats.HR}</TableCell>
-                    <TableCell className="text-right">{stats.RBI}</TableCell>
-                    <TableCell className="text-right">{stats.BB}</TableCell>
-                    <TableCell className="text-right">{stats.SO}</TableCell>
-                    <TableCell className="text-right">{stats.HBP}</TableCell>
-                    <TableCell className="text-right">{stats.SF}</TableCell>
-                    <TableCell className="text-right font-mono">{getBattingAverage(stats.H, stats.AB)}</TableCell>
-                    <TableCell className="text-right font-mono">
-                      {getOnBasePercentage(stats.H, stats.BB, stats.HBP, stats.AB, stats.SF)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {getSluggingPercentage(stats["1B"], stats["2B"], stats["3B"], stats.HR, stats.AB)}
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Player</TableHead>
+              <TableHead className="text-right">PA</TableHead>
+              <TableHead className="text-right">AB</TableHead>
+              <TableHead className="text-right">R</TableHead>
+              <TableHead className="text-right">H</TableHead>
+              <TableHead className="text-right">1B</TableHead>
+              <TableHead className="text-right">2B</TableHead>
+              <TableHead className="text-right">3B</TableHead>
+              <TableHead className="text-right">HR</TableHead>
+              <TableHead className="text-right">RBI</TableHead>
+              <TableHead className="text-right">BB</TableHead>
+              <TableHead className="text-right">SO</TableHead>
+              <TableHead className="text-right">HBP</TableHead>
+              <TableHead className="text-right">SF</TableHead>
+              <TableHead className="text-right">AVG</TableHead>
+              <TableHead className="text-right">OBP</TableHead>
+              <TableHead className="text-right">SLG</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {playersToDisplay.map((player) => {
+              const stats = aggregatedStats[player.id]
+              if (!stats) return null // Safety check
+              return (
+                <TableRow key={player.id}>
+                  <TableCell className="font-medium">{player.name}</TableCell>
+                  <TableCell className="text-right">{stats.PA}</TableCell>
+                  <TableCell className="text-right">{stats.AB}</TableCell>
+                  <TableCell className="text-right">{stats.R}</TableCell>
+                  <TableCell className="text-right">{stats.H}</TableCell>
+                  <TableCell className="text-right">{stats["1B"]}</TableCell>
+                  <TableCell className="text-right">{stats["2B"]}</TableCell>
+                  <TableCell className="text-right">{stats["3B"]}</TableCell>
+                  <TableCell className="text-right">{stats.HR}</TableCell>
+                  <TableCell className="text-right">{stats.RBI}</TableCell>
+                  <TableCell className="text-right">{stats.BB}</TableCell>
+                  <TableCell className="text-right">{stats.SO}</TableCell>
+                  <TableCell className="text-right">{stats.HBP}</TableCell>
+                  <TableCell className="text-right">{stats.SF}</TableCell>
+                  <TableCell className="text-right font-mono">{getBattingAverage(stats.H, stats.AB)}</TableCell>
+                  <TableCell className="text-right font-mono">
+                    {getOnBasePercentage(stats.H, stats.BB, stats.HBP, stats.AB, stats.SF)}
+                  </TableCell>
+                  <TableCell className="text-right font-mono">
+                    {getSluggingPercentage(stats["1B"], stats["2B"], stats["3B"], stats.HR, stats.AB)}
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   )

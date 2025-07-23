@@ -202,117 +202,111 @@ export default function StatsView({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[150px] sticky left-0 bg-card z-10">Player</TableHead>
-                  <TableHead className="text-right">GP</TableHead>
-                  <TableHead className="text-right">PA</TableHead>
-                  <TableHead className="text-right">AB</TableHead>
-                  <TableHead className="text-right">R</TableHead>
-                  <TableHead className="text-right">H</TableHead>
-                  <TableHead className="text-right">2B</TableHead>
-                  <TableHead className="text-right">3B</TableHead>
-                  <TableHead className="text-right">HR</TableHead>
-                  <TableHead className="text-right">RBI</TableHead>
-                  <TableHead className="text-right">BB</TableHead>
-                  <TableHead className="text-right">SO</TableHead>
-                  <TableHead className="text-right font-bold">AVG</TableHead>
-                  <TableHead className="text-right font-bold">OBP</TableHead>
-                  <TableHead className="text-right font-bold">SLG</TableHead>
-                  <TableHead className="text-right font-bold">OPS</TableHead>
-                  <TableHead className="text-right font-bold text-primary">wOBA</TableHead>
-                  <TableHead className="text-right sticky right-0 bg-card z-10">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {calculatedStats.length > 0 ? (
-                  calculatedStats.map((p) => (
-                    <TableRow key={p.playerId}>
-                      <TableCell className="font-medium sticky left-0 bg-card z-10">{p.name}</TableCell>
-                      <TableCell className={cn("text-right", p.GP === statLeaders.GP && "bg-primary/10 font-bold")}>
-                        {p.GP}
-                      </TableCell>
-                      <TableCell className={cn("text-right", p.PA === statLeaders.PA && "bg-primary/10 font-bold")}>
-                        {p.PA}
-                      </TableCell>
-                      <TableCell className={cn("text-right", p.AB === statLeaders.AB && "bg-primary/10 font-bold")}>
-                        {p.AB}
-                      </TableCell>
-                      <TableCell className={cn("text-right", p.R === statLeaders.R && "bg-primary/10 font-bold")}>
-                        {p.R}
-                      </TableCell>
-                      <TableCell className={cn("text-right", p.H === statLeaders.H && "bg-primary/10 font-bold")}>
-                        {p.H}
-                      </TableCell>
-                      <TableCell
-                        className={cn("text-right", p["2B"] === statLeaders["2B"] && "bg-primary/10 font-bold")}
-                      >
-                        {p["2B"]}
-                      </TableCell>
-                      <TableCell
-                        className={cn("text-right", p["3B"] === statLeaders["3B"] && "bg-primary/10 font-bold")}
-                      >
-                        {p["3B"]}
-                      </TableCell>
-                      <TableCell className={cn("text-right", p.HR === statLeaders.HR && "bg-primary/10 font-bold")}>
-                        {p.HR}
-                      </TableCell>
-                      <TableCell className={cn("text-right", p.RBI === statLeaders.RBI && "bg-primary/10 font-bold")}>
-                        {p.RBI}
-                      </TableCell>
-                      <TableCell className={cn("text-right", p.BB === statLeaders.BB && "bg-primary/10 font-bold")}>
-                        {p.BB}
-                      </TableCell>
-                      <TableCell className={cn("text-right", p.SO === statLeaders.SO && "bg-primary/10 font-bold")}>
-                        {p.SO}
-                      </TableCell>
-                      <TableCell
-                        className={cn("text-right font-mono font-bold", p.AVG === statLeaders.AVG && "bg-primary/10")}
-                      >
-                        {formatStat(p.AVG)}
-                      </TableCell>
-                      <TableCell
-                        className={cn("text-right font-mono font-bold", p.OBP === statLeaders.OBP && "bg-primary/10")}
-                      >
-                        {formatStat(p.OBP)}
-                      </TableCell>
-                      <TableCell
-                        className={cn("text-right font-mono font-bold", p.SLG === statLeaders.SLG && "bg-primary/10")}
-                      >
-                        {formatStat(p.SLG)}
-                      </TableCell>
-                      <TableCell
-                        className={cn("text-right font-mono font-bold", p.OPS === statLeaders.OPS && "bg-primary/10")}
-                      >
-                        {formatStat(p.OPS)}
-                      </TableCell>
-                      <TableCell
-                        className={cn(
-                          "text-right font-mono font-bold text-primary",
-                          p.wOBA === statLeaders.wOBA && "bg-primary/20",
-                        )}
-                      >
-                        {formatStat(p.wOBA)}
-                      </TableCell>
-                      <TableCell className="sticky right-0 bg-card z-10">
-                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(p.playerId)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={18} className="h-24 text-center">
-                      No players on this team yet. Add one from the Roster tab.
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[150px] sticky left-0 bg-card z-10">Player</TableHead>
+                <TableHead className="text-right">GP</TableHead>
+                <TableHead className="text-right">PA</TableHead>
+                <TableHead className="text-right">AB</TableHead>
+                <TableHead className="text-right">R</TableHead>
+                <TableHead className="text-right">H</TableHead>
+                <TableHead className="text-right">2B</TableHead>
+                <TableHead className="text-right">3B</TableHead>
+                <TableHead className="text-right">HR</TableHead>
+                <TableHead className="text-right">RBI</TableHead>
+                <TableHead className="text-right">BB</TableHead>
+                <TableHead className="text-right">SO</TableHead>
+                <TableHead className="text-right font-bold">AVG</TableHead>
+                <TableHead className="text-right font-bold">OBP</TableHead>
+                <TableHead className="text-right font-bold">SLG</TableHead>
+                <TableHead className="text-right font-bold">OPS</TableHead>
+                <TableHead className="text-right font-bold text-primary">wOBA</TableHead>
+                <TableHead className="text-right sticky right-0 bg-card z-10">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {calculatedStats.length > 0 ? (
+                calculatedStats.map((p) => (
+                  <TableRow key={p.playerId}>
+                    <TableCell className="font-medium sticky left-0 bg-card z-10">{p.name}</TableCell>
+                    <TableCell className={cn("text-right", p.GP === statLeaders.GP && "bg-primary/10 font-bold")}>
+                      {p.GP}
+                    </TableCell>
+                    <TableCell className={cn("text-right", p.PA === statLeaders.PA && "bg-primary/10 font-bold")}>
+                      {p.PA}
+                    </TableCell>
+                    <TableCell className={cn("text-right", p.AB === statLeaders.AB && "bg-primary/10 font-bold")}>
+                      {p.AB}
+                    </TableCell>
+                    <TableCell className={cn("text-right", p.R === statLeaders.R && "bg-primary/10 font-bold")}>
+                      {p.R}
+                    </TableCell>
+                    <TableCell className={cn("text-right", p.H === statLeaders.H && "bg-primary/10 font-bold")}>
+                      {p.H}
+                    </TableCell>
+                    <TableCell className={cn("text-right", p["2B"] === statLeaders["2B"] && "bg-primary/10 font-bold")}>
+                      {p["2B"]}
+                    </TableCell>
+                    <TableCell className={cn("text-right", p["3B"] === statLeaders["3B"] && "bg-primary/10 font-bold")}>
+                      {p["3B"]}
+                    </TableCell>
+                    <TableCell className={cn("text-right", p.HR === statLeaders.HR && "bg-primary/10 font-bold")}>
+                      {p.HR}
+                    </TableCell>
+                    <TableCell className={cn("text-right", p.RBI === statLeaders.RBI && "bg-primary/10 font-bold")}>
+                      {p.RBI}
+                    </TableCell>
+                    <TableCell className={cn("text-right", p.BB === statLeaders.BB && "bg-primary/10 font-bold")}>
+                      {p.BB}
+                    </TableCell>
+                    <TableCell className={cn("text-right", p.SO === statLeaders.SO && "bg-primary/10 font-bold")}>
+                      {p.SO}
+                    </TableCell>
+                    <TableCell
+                      className={cn("text-right font-mono font-bold", p.AVG === statLeaders.AVG && "bg-primary/10")}
+                    >
+                      {formatStat(p.AVG)}
+                    </TableCell>
+                    <TableCell
+                      className={cn("text-right font-mono font-bold", p.OBP === statLeaders.OBP && "bg-primary/10")}
+                    >
+                      {formatStat(p.OBP)}
+                    </TableCell>
+                    <TableCell
+                      className={cn("text-right font-mono font-bold", p.SLG === statLeaders.SLG && "bg-primary/10")}
+                    >
+                      {formatStat(p.SLG)}
+                    </TableCell>
+                    <TableCell
+                      className={cn("text-right font-mono font-bold", p.OPS === statLeaders.OPS && "bg-primary/10")}
+                    >
+                      {formatStat(p.OPS)}
+                    </TableCell>
+                    <TableCell
+                      className={cn(
+                        "text-right font-mono font-bold text-primary",
+                        p.wOBA === statLeaders.wOBA && "bg-primary/20",
+                      )}
+                    >
+                      {formatStat(p.wOBA)}
+                    </TableCell>
+                    <TableCell className="sticky right-0 bg-card z-10">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditClick(p.playerId)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={18} className="h-24 text-center">
+                    No players on this team yet. Add one from the Roster tab.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
       {selectedPlayer && (

@@ -59,6 +59,7 @@
     "react-google-recaptcha-v3": "latest",
     "react-hook-form": "latest",
     "react-resizable-panels": "latest",
+    "react-server-dom-webpack": "latest",
     "recharts": "latest",
     "resend": "latest",
     "sonner": "latest",
@@ -67,6 +68,7 @@
     "tailwindcss-animate": "^1.0.7",
     "twilio": "latest",
     "vaul": "latest",
+    "webpack": "latest",
     "zod": "latest"
   },
   "devDependencies": {

@@ -53,7 +53,16 @@ export default function PlayerTable({ players, teamId }: PlayerTableProps) {
     setIsUpdating(true)
 
     try {
-      console.log("Calling updatePlayerName with:", { teamId, playerId, editName: editName.trim() })
+      console.log("=== FRONTEND DEBUG ===")
+      console.log("Player ID being sent:", playerId)
+      console.log("Player ID type:", typeof playerId)
+      console.log("Team ID being sent:", teamId)
+      console.log("New name:", editName.trim())
+
+      // Find the player in our local data
+      const localPlayer = players.find((p) => p.id === playerId)
+      console.log("Local player data:", localPlayer)
+
       const result = await updatePlayerName(teamId, playerId, editName.trim())
       console.log("updatePlayerName result:", result)
 

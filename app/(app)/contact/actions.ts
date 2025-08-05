@@ -1,47 +1,46 @@
 "use server"
 
-/**
- * Minimal stub so build-time static analysis succeeds.
- * Replace with your real implementation when ready.
- */
-export async function submitContactForm(formData: FormData): Promise<{ ok: boolean }> {
-  // Simulate sending an email (replace with actual email sending logic)
-  const name = formData.get("name")
-  const email = formData.get("email")
-  const message = formData.get("message")
+import { Resend } from "resend"
+import ContactFormEmail from "@/components/emails/contact-form-email"
 
-  if (!name || typeof name !== "string") {
-    console.error("Invalid name")
-    return { ok: false }
+export interface ContactResponse {
+  ok: boolean
+  error?: string
+}
+
+const resend = new Resend(process.env.RESEND_API_KEY)
+const RECIPIENT = process.env.CONTACT_FORM_RECIPIENT_EMAIL ?? ""
+
+/** Server Action: handle contact-form submission and email via Resend */
+export async function submitContact(_prev: ContactResponse, formData: FormData): Promise<ContactResponse> {
+  const name = formData.get("name")?.toString().trim() ?? ""
+  const email = formData.get("email")?.toString().trim() ?? ""
+  const message = formData.get("message")?.toString().trim() ?? ""
+
+  if (!name || !email || !message) {
+    return { ok: false, error: "All fields are required." }
   }
-
-  if (!email || typeof email !== "string") {
-    console.error("Invalid email")
-    return { ok: false }
+  if (!RECIPIENT) {
+    console.error("CONTACT_FORM_RECIPIENT_EMAIL is not set")
+    return { ok: false, error: "Server configuration error." }
   }
-
-  if (!message || typeof message !== "string") {
-    console.error("Invalid message")
-    return { ok: false }
-  }
-
-  console.log("Form Data:", { name, email, message })
 
   try {
-    // Replace this with your actual email sending logic (e.g., using Nodemailer, SendGrid, etc.)
-    console.log("Simulating email sending...")
-    await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate a delay
-
-    console.log("Email sent successfully!")
+    await resend.emails.send({
+      from: "ScoreBook Snap Support <contact@support.scorebooksnap.com>",
+      to: RECIPIENT,
+      reply_to: email,
+      subject: "New message from ScoreBook Snap contact form",
+      react: ContactFormEmail({ name, email, message }),
+    })
     return { ok: true }
-  } catch (error) {
-    console.error("Error sending email:", error)
-    return { ok: false }
+  } catch (err) {
+    console.error("Resend error:", err)
+    return { ok: false, error: "Failed to send message. Please try again later." }
   }
 }
 
 /**
- * submitContact is an alias of submitContactForm to satisfy the deployment check
- * while keeping backward compatibility with any existing imports.
+ * submitContactForm is an alias of submitContact to maintain backward compatibility
  */
-export const submitContact = submitContactForm
+export const submitContactForm = submitContact

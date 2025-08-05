@@ -298,38 +298,27 @@ export async function updatePlayerName(teamId: string, playerId: string, newName
   try {
     console.log("Updating player name:", { teamId, playerId, newName })
 
-    // First, let's verify the player exists and get the current data
-    const { data: existingPlayers, error: findError } = await supabase
+    // First, let's see what players exist for this team
+    const { data: allPlayers, error: allPlayersError } = await supabase
       .from("players")
       .select("*")
-      .eq("id", playerId)
       .eq("team_id", teamId)
 
-    console.log("Player lookup result:", { existingPlayers, findError })
+    console.log("All players for team:", allPlayers)
 
-    if (findError) {
-      console.error("Error finding player:", findError)
-      throw findError
+    // Check if the specific player exists
+    const targetPlayer = allPlayers?.find((p) => p.id === playerId)
+    console.log("Target player found:", targetPlayer)
+
+    if (!targetPlayer) {
+      return { success: false, error: "Player not found in team" }
     }
 
-    if (!existingPlayers || existingPlayers.length === 0) {
-      return { success: false, error: "Player not found" }
-    }
-
-    if (existingPlayers.length > 1) {
-      console.error("Multiple players found with same ID:", existingPlayers)
-      return { success: false, error: "Multiple players found with same ID" }
-    }
-
-    const existingPlayer = existingPlayers[0]
-    console.log("Found player:", existingPlayer)
-
-    // Now update the player - don't use .single() since we're not sure about uniqueness
+    // Perform the update using just the player ID (most reliable)
     const { data: updatedPlayers, error: updateError } = await supabase
       .from("players")
       .update({ name: newName })
       .eq("id", playerId)
-      .eq("team_id", teamId)
       .select()
 
     console.log("Update result:", { updatedPlayers, updateError })
@@ -340,7 +329,22 @@ export async function updatePlayerName(teamId: string, playerId: string, newName
     }
 
     if (!updatedPlayers || updatedPlayers.length === 0) {
-      return { success: false, error: "No player was updated" }
+      // Try alternative approach - update without team_id constraint
+      console.log("First update failed, trying without team constraint...")
+      const { data: altUpdatedPlayers, error: altUpdateError } = await supabase
+        .from("players")
+        .update({ name: newName })
+        .eq("id", playerId)
+        .select()
+
+      console.log("Alternative update result:", { altUpdatedPlayers, altUpdateError })
+
+      if (altUpdateError || !altUpdatedPlayers || altUpdatedPlayers.length === 0) {
+        return { success: false, error: "Failed to update player - no rows affected" }
+      }
+
+      revalidatePath(`/team/${teamId}`)
+      return { success: true, data: altUpdatedPlayers[0] }
     }
 
     revalidatePath(`/team/${teamId}`)

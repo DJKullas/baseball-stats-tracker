@@ -298,46 +298,53 @@ export async function updatePlayerName(teamId: string, playerId: string, newName
   try {
     console.log("Updating player name:", { teamId, playerId, newName })
 
-    // First, let's verify the player exists
-    const { data: existingPlayer, error: findError } = await supabase
+    // First, let's verify the player exists and get the current data
+    const { data: existingPlayers, error: findError } = await supabase
       .from("players")
       .select("*")
       .eq("id", playerId)
       .eq("team_id", teamId)
-      .single()
 
-    console.log("Player lookup result:", { existingPlayer, findError })
+    console.log("Player lookup result:", { existingPlayers, findError })
 
     if (findError) {
       console.error("Error finding player:", findError)
-      if (findError.code === "PGRST116") {
-        return { success: false, error: "Player not found" }
-      }
       throw findError
     }
 
-    if (!existingPlayer) {
+    if (!existingPlayers || existingPlayers.length === 0) {
       return { success: false, error: "Player not found" }
     }
 
-    // Now update the player
-    const { data, error } = await supabase
+    if (existingPlayers.length > 1) {
+      console.error("Multiple players found with same ID:", existingPlayers)
+      return { success: false, error: "Multiple players found with same ID" }
+    }
+
+    const existingPlayer = existingPlayers[0]
+    console.log("Found player:", existingPlayer)
+
+    // Now update the player - don't use .single() since we're not sure about uniqueness
+    const { data: updatedPlayers, error: updateError } = await supabase
       .from("players")
       .update({ name: newName })
       .eq("id", playerId)
       .eq("team_id", teamId)
       .select()
-      .single()
 
-    console.log("Update result:", { data, error })
+    console.log("Update result:", { updatedPlayers, updateError })
 
-    if (error) {
-      console.error("Database error:", error)
-      throw error
+    if (updateError) {
+      console.error("Database error:", updateError)
+      throw updateError
+    }
+
+    if (!updatedPlayers || updatedPlayers.length === 0) {
+      return { success: false, error: "No player was updated" }
     }
 
     revalidatePath(`/team/${teamId}`)
-    return { success: true, data: data }
+    return { success: true, data: updatedPlayers[0] }
   } catch (error: any) {
     console.error("Error updating player name:", error)
     return { success: false, error: error.message || "Failed to update player name." }

@@ -30,6 +30,7 @@ export default function PlayerTable({ players, teamId }: PlayerTableProps) {
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false)
   const [sourcePlayerId, setSourcePlayerId] = useState<string>("")
   const [targetPlayerId, setTargetPlayerId] = useState<string>("")
+  const [isUpdating, setIsUpdating] = useState(false)
 
   const handleEditStart = (player: Player) => {
     setEditingPlayer(player.id)
@@ -47,14 +48,28 @@ export default function PlayerTable({ players, teamId }: PlayerTableProps) {
       return
     }
 
-    const result = await updatePlayerName(teamId, playerId, editName.trim())
+    if (isUpdating) return
 
-    if (result.success) {
-      toast.success("Player name updated successfully")
-      setEditingPlayer(null)
-      setEditName("")
-    } else {
-      toast.error(result.error || "Failed to update player name")
+    setIsUpdating(true)
+
+    try {
+      console.log("Calling updatePlayerName with:", { teamId, playerId, editName: editName.trim() })
+      const result = await updatePlayerName(teamId, playerId, editName.trim())
+      console.log("updatePlayerName result:", result)
+
+      if (result.success) {
+        toast.success("Player name updated successfully")
+        setEditingPlayer(null)
+        setEditName("")
+      } else {
+        toast.error(result.error || "Failed to update player name")
+        console.error("Update failed:", result.error)
+      }
+    } catch (error) {
+      console.error("Error in handleEditSave:", error)
+      toast.error("An unexpected error occurred")
+    } finally {
+      setIsUpdating(false)
     }
   }
 
@@ -132,6 +147,7 @@ export default function PlayerTable({ players, teamId }: PlayerTableProps) {
                           }}
                           className="h-8"
                           autoFocus
+                          disabled={isUpdating}
                         />
                       ) : (
                         player.name
@@ -146,10 +162,17 @@ export default function PlayerTable({ players, teamId }: PlayerTableProps) {
                             variant="ghost"
                             onClick={() => handleEditSave(player.id)}
                             className="h-8 w-8 p-0"
+                            disabled={isUpdating}
                           >
                             <Check className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={handleEditCancel} className="h-8 w-8 p-0">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleEditCancel}
+                            className="h-8 w-8 p-0"
+                            disabled={isUpdating}
+                          >
                             <X className="h-4 w-4" />
                           </Button>
                         </div>

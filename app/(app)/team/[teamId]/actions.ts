@@ -294,16 +294,33 @@ export async function updatePlayerStats(teamId: string, statsToUpdate: { resultI
 
 export async function updatePlayerName(teamId: string, playerId: string, newName: string) {
   const supabase = createServerClient()
-  try {
-    const { error } = await supabase.from("players").update({ name: newName }).eq("id", playerId).eq("team_id", teamId)
 
-    if (error) throw error
+  try {
+    console.log("Updating player name:", { teamId, playerId, newName })
+
+    const { data, error } = await supabase
+      .from("players")
+      .update({ name: newName })
+      .eq("id", playerId)
+      .eq("team_id", teamId)
+      .select()
+
+    console.log("Update result:", { data, error })
+
+    if (error) {
+      console.error("Database error:", error)
+      throw error
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error("No player found to update")
+    }
 
     revalidatePath(`/team/${teamId}`)
-    return { success: true }
+    return { success: true, data: data[0] }
   } catch (error: any) {
     console.error("Error updating player name:", error)
-    return { success: false, error: "Failed to update player name." }
+    return { success: false, error: error.message || "Failed to update player name." }
   }
 }
 

@@ -298,12 +298,36 @@ export async function updatePlayerName(teamId: string, playerId: string, newName
   try {
     console.log("Updating player name:", { teamId, playerId, newName })
 
+    // First, let's verify the player exists
+    const { data: existingPlayer, error: findError } = await supabase
+      .from("players")
+      .select("*")
+      .eq("id", playerId)
+      .eq("team_id", teamId)
+      .single()
+
+    console.log("Player lookup result:", { existingPlayer, findError })
+
+    if (findError) {
+      console.error("Error finding player:", findError)
+      if (findError.code === "PGRST116") {
+        return { success: false, error: "Player not found" }
+      }
+      throw findError
+    }
+
+    if (!existingPlayer) {
+      return { success: false, error: "Player not found" }
+    }
+
+    // Now update the player
     const { data, error } = await supabase
       .from("players")
       .update({ name: newName })
       .eq("id", playerId)
       .eq("team_id", teamId)
       .select()
+      .single()
 
     console.log("Update result:", { data, error })
 
@@ -312,12 +336,8 @@ export async function updatePlayerName(teamId: string, playerId: string, newName
       throw error
     }
 
-    if (!data || data.length === 0) {
-      throw new Error("No player found to update")
-    }
-
     revalidatePath(`/team/${teamId}`)
-    return { success: true, data: data[0] }
+    return { success: true, data: data }
   } catch (error: any) {
     console.error("Error updating player name:", error)
     return { success: false, error: error.message || "Failed to update player name." }
@@ -328,60 +348,129 @@ export async function mergePlayers(teamId: string, sourcePlayerId: string, targe
   const supabase = createServerClient()
 
   try {
-    // Start a transaction-like operation
-    // First, get all results for both players to check for conflicts
-    const { data: sourceResults, error: sourceError } = await supabase
+    console.log("Starting player merge:", { teamId, sourcePlayerId, targetPlayerId })
+
+    // First, verify both players exist and belong to the team
+    const { data: sourcePlayer, error: sourceError } = await supabase
+      .from("players")
+      .select("*")
+      .eq("id", sourcePlayerId)
+      .eq("team_id", teamId)
+      .single()
+
+    if (sourceError || !sourcePlayer) {
+      console.error("Source player not found:", sourceError)
+      return { success: false, error: "Source player not found" }
+    }
+
+    const { data: targetPlayer, error: targetError } = await supabase
+      .from("players")
+      .select("*")
+      .eq("id", targetPlayerId)
+      .eq("team_id", teamId)
+      .single()
+
+    if (targetError || !targetPlayer) {
+      console.error("Target player not found:", targetError)
+      return { success: false, error: "Target player not found" }
+    }
+
+    console.log("Both players found:", { sourcePlayer: sourcePlayer.name, targetPlayer: targetPlayer.name })
+
+    // Get all results for both players
+    const { data: sourceResults, error: sourceResultsError } = await supabase
       .from("results")
-      .select("*, games(id)")
+      .select("*")
       .eq("player_id", sourcePlayerId)
 
-    if (sourceError) throw sourceError
+    if (sourceResultsError) {
+      console.error("Error fetching source results:", sourceResultsError)
+      throw sourceResultsError
+    }
 
-    const { data: targetResults, error: targetError } = await supabase
+    const { data: targetResults, error: targetResultsError } = await supabase
       .from("results")
-      .select("*, games(id)")
+      .select("*")
       .eq("player_id", targetPlayerId)
 
-    if (targetError) throw targetError
+    if (targetResultsError) {
+      console.error("Error fetching target results:", targetResultsError)
+      throw targetResultsError
+    }
+
+    console.log("Results found:", {
+      sourceResultsCount: sourceResults?.length || 0,
+      targetResultsCount: targetResults?.length || 0,
+    })
 
     // Check for conflicts (same game_id for both players)
     const sourceGameIds = new Set(sourceResults?.map((r) => r.game_id) || [])
     const targetGameIds = new Set(targetResults?.map((r) => r.game_id) || [])
     const conflictingGameIds = [...sourceGameIds].filter((gameId) => targetGameIds.has(gameId))
 
+    console.log("Conflicting games:", conflictingGameIds)
+
     // If there are conflicts, delete the source player's results for those games
     // (keeping the target player's results)
     if (conflictingGameIds.length > 0) {
+      console.log("Deleting conflicting source results for games:", conflictingGameIds)
       const { error: deleteConflictsError } = await supabase
         .from("results")
         .delete()
         .eq("player_id", sourcePlayerId)
         .in("game_id", conflictingGameIds)
 
-      if (deleteConflictsError) throw deleteConflictsError
+      if (deleteConflictsError) {
+        console.error("Error deleting conflicting results:", deleteConflictsError)
+        throw deleteConflictsError
+      }
     }
 
-    // Move all remaining results from source player to target player
-    const { error: updateError } = await supabase
+    // Get remaining source results (after conflict deletion)
+    const { data: remainingSourceResults, error: remainingError } = await supabase
       .from("results")
-      .update({ player_id: targetPlayerId })
+      .select("*")
       .eq("player_id", sourcePlayerId)
 
-    if (updateError) throw updateError
+    if (remainingError) {
+      console.error("Error fetching remaining source results:", remainingError)
+      throw remainingError
+    }
+
+    console.log("Remaining source results to transfer:", remainingSourceResults?.length || 0)
+
+    // Move all remaining results from source player to target player
+    if (remainingSourceResults && remainingSourceResults.length > 0) {
+      const { error: updateError } = await supabase
+        .from("results")
+        .update({ player_id: targetPlayerId })
+        .eq("player_id", sourcePlayerId)
+
+      if (updateError) {
+        console.error("Error updating results:", updateError)
+        throw updateError
+      }
+      console.log("Successfully transferred results to target player")
+    }
 
     // Delete the source player
+    console.log("Deleting source player:", sourcePlayer.name)
     const { error: deletePlayerError } = await supabase
       .from("players")
       .delete()
       .eq("id", sourcePlayerId)
       .eq("team_id", teamId)
 
-    if (deletePlayerError) throw deletePlayerError
+    if (deletePlayerError) {
+      console.error("Error deleting source player:", deletePlayerError)
+      throw deletePlayerError
+    }
 
+    console.log("Player merge completed successfully")
     revalidatePath(`/team/${teamId}`)
     return { success: true }
   } catch (error: any) {
     console.error("Error merging players:", error)
-    return { success: false, error: "Failed to merge players." }
+    return { success: false, error: error.message || "Failed to merge players." }
   }
 }

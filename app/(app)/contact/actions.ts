@@ -1,46 +1,49 @@
 "use server"
 
 import { Resend } from "resend"
-import ContactFormEmail from "@/components/emails/contact-form-email"
+import { ContactFormEmail } from "@/components/emails/contact-form-email"
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export interface ContactResponse {
   ok: boolean
   error?: string
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-const RECIPIENT = process.env.CONTACT_FORM_RECIPIENT_EMAIL ?? ""
-
-/** Server Action: handle contact-form submission and email via Resend */
-export async function submitContact(_prev: ContactResponse, formData: FormData): Promise<ContactResponse> {
-  const name = formData.get("name")?.toString().trim() ?? ""
-  const email = formData.get("email")?.toString().trim() ?? ""
-  const message = formData.get("message")?.toString().trim() ?? ""
-
-  if (!name || !email || !message) {
-    return { ok: false, error: "All fields are required." }
-  }
-  if (!RECIPIENT) {
-    console.error("CONTACT_FORM_RECIPIENT_EMAIL is not set")
-    return { ok: false, error: "Server configuration error." }
-  }
-
+export async function submitContact(formData: FormData): Promise<ContactResponse> {
   try {
+    const name = formData.get("name")?.toString().trim()
+    const email = formData.get("email")?.toString().trim()
+    const message = formData.get("message")?.toString().trim()
+
+    if (!name || !email || !message) {
+      return { ok: false, error: "All fields are required." }
+    }
+
+    if (!process.env.RESEND_API_KEY) {
+      console.error("RESEND_API_KEY is not configured")
+      return { ok: false, error: "Email service is not configured." }
+    }
+
+    if (!process.env.CONTACT_FORM_RECIPIENT_EMAIL) {
+      console.error("CONTACT_FORM_RECIPIENT_EMAIL is not configured")
+      return { ok: false, error: "Recipient email is not configured." }
+    }
+
     await resend.emails.send({
-      from: "ScoreBook Snap Support <contact@support.scorebooksnap.com>",
-      to: RECIPIENT,
-      reply_to: email,
-      subject: "New message from ScoreBook Snap contact form",
+      from: "contact@support.scorebooksnap.com",
+      to: process.env.CONTACT_FORM_RECIPIENT_EMAIL,
+      subject: "New Contact Form Message - ScoreBook Snap",
+      replyTo: email,
       react: ContactFormEmail({ name, email, message }),
     })
+
     return { ok: true }
-  } catch (err) {
-    console.error("Resend error:", err)
-    return { ok: false, error: "Failed to send message. Please try again later." }
+  } catch (error) {
+    console.error("Failed to send contact email:", error)
+    return { ok: false, error: "Failed to send message. Please try again." }
   }
 }
 
-/**
- * submitContactForm is an alias of submitContact to maintain backward compatibility
- */
-export const submitContactForm = submitContact
+// Legacy export for backward compatibility
+export { submitContact as submitContactForm }

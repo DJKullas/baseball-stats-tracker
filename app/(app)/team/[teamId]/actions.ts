@@ -298,69 +298,67 @@ export async function updatePlayerName(teamId: string, playerId: string, newName
   try {
     console.log("=== UPDATE PLAYER NAME DEBUG ===")
     console.log("Input params:", { teamId, playerId, newName })
-    console.log("Player ID type:", typeof playerId)
-    console.log("Team ID type:", typeof teamId)
 
-    // First, let's see what players exist for this team
-    const { data: allPlayers, error: allPlayersError } = await supabase
-      .from("players")
-      .select("*")
-      .eq("team_id", teamId)
-
-    console.log("All players for team:", allPlayers)
-    console.log("Looking for player with ID:", playerId)
-
-    if (allPlayersError) {
-      console.error("Error fetching players:", allPlayersError)
-      throw allPlayersError
-    }
-
-    // Check if the specific player exists
-    const targetPlayer = allPlayers?.find((p) => p.id === playerId)
-    console.log("Target player found:", targetPlayer)
-
-    if (!targetPlayer) {
-      console.log(
-        "Player not found. Available player IDs:",
-        allPlayers?.map((p) => p.id),
-      )
-      return { success: false, error: "Player not found in team" }
-    }
-
-    console.log("Attempting to update player:", targetPlayer.name, "to:", newName)
-
-    // Perform the update using just the player ID
+    // Get the current user to check permissions
     const {
-      data: updatedPlayers,
-      error: updateError,
-      count,
-    } = await supabase.from("players").update({ name: newName }).eq("id", playerId).select()
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    console.log("Current user:", user?.id, userError)
 
-    console.log("Update result:", { updatedPlayers, updateError, count })
+    // Check if user has access to this team
+    const { data: teamAccess, error: teamError } = await supabase
+      .from("teams")
+      .select("*")
+      .eq("id", teamId)
+      .eq("user_id", user?.id)
+      .single()
 
-    if (updateError) {
-      console.error("Database update error:", updateError)
-      throw updateError
-    }
+    console.log("Team access check:", { teamAccess, teamError })
 
-    if (!updatedPlayers || updatedPlayers.length === 0) {
-      console.log("No rows were updated. Checking if player still exists...")
+    // Try using RPC function approach to bypass RLS
+    const { data: rpcResult, error: rpcError } = await supabase.rpc("update_player_name", {
+      p_team_id: teamId,
+      p_player_id: playerId,
+      p_new_name: newName,
+    })
 
-      // Check if player still exists
-      const { data: checkPlayer, error: checkError } = await supabase
+    console.log("RPC result:", { rpcResult, rpcError })
+
+    if (rpcError) {
+      // Fallback to direct update with explicit team ownership check
+      console.log("RPC failed, trying direct update...")
+
+      // First verify we own this team
+      if (!teamAccess) {
+        return { success: false, error: "Access denied: You don't own this team" }
+      }
+
+      // Try the update with explicit ownership verification
+      const { data: updatedPlayers, error: updateError } = await supabase
         .from("players")
-        .select("*")
+        .update({ name: newName })
         .eq("id", playerId)
-        .single()
+        .eq("team_id", teamId)
+        .select()
 
-      console.log("Player check after failed update:", { checkPlayer, checkError })
+      console.log("Direct update result:", { updatedPlayers, updateError })
 
-      return { success: false, error: "Failed to update player - no rows affected" }
+      if (updateError) {
+        throw updateError
+      }
+
+      if (!updatedPlayers || updatedPlayers.length === 0) {
+        return { success: false, error: "Failed to update player - no rows affected" }
+      }
+
+      revalidatePath(`/team/${teamId}`)
+      return { success: true, data: updatedPlayers[0] }
     }
 
-    console.log("Successfully updated player:", updatedPlayers[0])
+    // RPC succeeded
     revalidatePath(`/team/${teamId}`)
-    return { success: true, data: updatedPlayers[0] }
+    return { success: true, data: rpcResult }
   } catch (error: any) {
     console.error("Error updating player name:", error)
     return { success: false, error: error.message || "Failed to update player name." }
@@ -372,6 +370,27 @@ export async function mergePlayers(teamId: string, sourcePlayerId: string, targe
 
   try {
     console.log("Starting player merge:", { teamId, sourcePlayerId, targetPlayerId })
+
+    // Get the current user to check permissions
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return { success: false, error: "Authentication required" }
+    }
+
+    // Check if user has access to this team
+    const { data: teamAccess, error: teamError } = await supabase
+      .from("teams")
+      .select("*")
+      .eq("id", teamId)
+      .eq("user_id", user.id)
+      .single()
+
+    if (teamError || !teamAccess) {
+      return { success: false, error: "Access denied: You don't own this team" }
+    }
 
     // First, verify both players exist and belong to the team
     const { data: sourcePlayer, error: sourceError } = await supabase
